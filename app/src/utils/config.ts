@@ -4,7 +4,7 @@ import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 
 export const config = getDefaultConfig({
   appName: 'Football Betting DApp',
-  projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
+  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
   chains: [sepolia],
   transports: {
     [sepolia.id]: http(),
@@ -12,7 +12,7 @@ export const config = getDefaultConfig({
 })
 
 // Contract addresses - update these after deployment
-export const CONTRACT_ADDRESS = process.env.REACT_APP_CONTRACT_ADDRESS || '0x0000000000000000000000000000000000000000' as const
+export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '0x0000000000000000000000000000000000000000' as const
 
 // Zama FHE configuration for Sepolia
 export const FHEVM_CONFIG = {
