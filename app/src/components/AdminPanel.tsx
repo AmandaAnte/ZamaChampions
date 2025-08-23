@@ -58,7 +58,7 @@ const AdminPanel: React.FC = () => {
         BigInt(matchTimestamp)
       )
       
-      setSuccess('比赛创建成功！')
+      setSuccess('比赛创建中...')
     } catch (err: any) {
       console.error('创建比赛失败:', err)
       setError(err.message || '创建比赛失败')

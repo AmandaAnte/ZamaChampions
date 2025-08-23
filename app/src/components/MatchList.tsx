@@ -46,9 +46,16 @@ const MatchList: React.FC = () => {
       return
     }
 
+    if (!betDirection) {
+      setError('请选择押注方向')
+      return
+    }
+
     try {
       setError('')
       setSuccess('')
+
+      console.log('开始押注流程...', { matchId, betDirection, betCount })
 
       // 使用FHE加密押注数据
       const encryptedData = await encryptBetData(
@@ -58,6 +65,8 @@ const MatchList: React.FC = () => {
         Number(betCount)
       )
 
+      console.log('加密数据完成，调用合约...')
+
       placeBet(
         matchId,
         encryptedData.handles[0], // betDirection
@@ -65,12 +74,12 @@ const MatchList: React.FC = () => {
         encryptedData.inputProof as `0x${string}`
       )
 
-      setSuccess(`成功押注！消耗 ${Number(betCount) * BET_UNIT} 积分`)
+      setSuccess(`押注交易已提交，请在钱包中确认`)
       setBetCount('1')
       setSelectedMatch(null)
     } catch (err: any) {
       console.error('押注失败:', err)
-      setError(err.message || '押注失败')
+      setError(`押注失败: ${err.message || '未知错误'}`)
     }
   }
 
@@ -208,6 +217,15 @@ const MatchCard: React.FC<{
   const hasBet = Boolean(userBet?.betDirection && userBet.betDirection !== '0x0000000000000000000000000000000000000000000000000000000000000000')
   const canBet = Boolean(status === 'betting' && address && !hasBet)
   const canSettle = Boolean(match.isFinished && hasBet && !userBet?.hasSettled && matchBets?.isTotalDecrypted)
+  
+  console.log(`MatchCard ${matchId}:`, {
+    selectedMatch,
+    matchId,
+    isSelected: selectedMatch === matchId,
+    canBet,
+    status,
+    address: !!address
+  })
 
   return (
     <div className="match-card card">
@@ -222,32 +240,26 @@ const MatchCard: React.FC<{
         <div className="text-2xl font-bold mb-2">
           {match.homeTeam} vs {match.awayTeam}
         </div>
-        {match.isFinished && (
-          <div className="text-lg text-green">
-            结果: {getResultText(match.result)}
-          </div>
-        )}
       </div>
 
       <div className="text-sm text-gray mb-4">
         <p>押注时间: {formatTime(match.bettingStartTime)} 至 {formatTime(match.bettingEndTime)}</p>
         <p>比赛时间: {formatTime(match.matchTime)}</p>
+        {match.isFinished && (
+          <p className="text-green font-bold mt-2">
+            比赛结果: {getResultText(match.result)}
+          </p>
+        )}
       </div>
 
       {/* 显示押注统计（如果已解密） */}
       {Boolean(matchBets?.isTotalDecrypted) && (
-        <div className="grid grid-3 gap-2 mb-4 text-sm">
-          <div className="text-center">
-            <div className="font-bold">主队获胜</div>
-            <div>{Number(matchBets?.decryptedHomeWinTotal || 0)} 注</div>
-          </div>
-          <div className="text-center">
-            <div className="font-bold">客队获胜</div>
-            <div>{Number(matchBets?.decryptedAwayWinTotal || 0)} 注</div>
-          </div>
-          <div className="text-center">
-            <div className="font-bold">平局</div>
-            <div>{Number(matchBets?.decryptedDrawTotal || 0)} 注</div>
+        <div className="mb-4">
+          <p className="text-sm font-bold mb-2">押注统计:</p>
+          <div className="flex justify-between text-sm">
+            <span>主队获胜: <strong>{Number(matchBets?.decryptedHomeWinTotal || 0)}注</strong></span>
+            <span>客队获胜: <strong>{Number(matchBets?.decryptedAwayWinTotal || 0)}注</strong></span>
+            <span>平局: <strong>{Number(matchBets?.decryptedDrawTotal || 0)}注</strong></span>
           </div>
         </div>
       )}
@@ -263,6 +275,7 @@ const MatchCard: React.FC<{
       {/* 押注界面 */}
       {canBet && (
         <div>
+          <p className="text-xs text-gray mb-2">调试：canBet={canBet.toString()}, selected={selectedMatch?.toString()}, matchId={matchId.toString()}</p>
           {selectedMatch === matchId ? (
             <div>
               <div className="grid grid-3 gap-2 mb-4">
@@ -323,7 +336,11 @@ const MatchCard: React.FC<{
           ) : (
             <button
               className="button w-full"
-              onClick={() => setSelectedMatch(matchId)}
+              onClick={() => {
+                console.log('押注按钮被点击，matchId:', matchId)
+                setSelectedMatch(matchId)
+                console.log('selectedMatch 设置为:', matchId)
+              }}
             >
               押注
             </button>
