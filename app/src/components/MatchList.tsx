@@ -53,13 +53,23 @@ const MatchList: React.FC = () => {
     setBetDirection(BetDirection.HomeWin)
     setBetCount('1')
   }
-
+  const convertHex = (handle: any): string => {
+    let formattedHandle: string;
+    if (typeof handle === 'string') {
+      formattedHandle = handle.startsWith('0x') ? handle : `0x${handle}`;
+    } else if (handle instanceof Uint8Array) {
+      formattedHandle = `0x${Array.from(handle).map(b => b.toString(16).padStart(2, '0')).join('')}`;
+    } else {
+      formattedHandle = `0x${handle.toString()}`;
+    }
+    return formattedHandle
+  };
   const handlePlaceBet = async (matchId: bigint) => {
     console.log('=== handlePlaceBet 开始 ===')
     console.log('参数:', { matchId, betDirection, betCount })
     console.log('address:', address)
     console.log('walletClient:', !!walletClient)
-    
+
     if (!address || !walletClient) {
       console.log('钱包未连接')
       setError('请连接钱包')
@@ -89,16 +99,16 @@ const MatchList: React.FC = () => {
         CONTRACT_ADDRESS,
         address,
         betDirection,
-        Number(betCount)
+        parseInt(betCount)
       )
 
       console.log('加密数据完成，调用合约...')
 
       await placeBet(
         matchId,
-        encryptedData.handles[0], // betDirection
-        encryptedData.handles[1], // betCount
-        encryptedData.inputProof as `0x${string}`
+        convertHex(encryptedData.handles[0]), // betDirection
+        convertHex(encryptedData.handles[1]), // betCount
+        convertHex(encryptedData.inputProof)
       )
 
       setSuccess(`押注成功！消耗 ${Number(betCount) * BET_UNIT} 积分`)
@@ -203,170 +213,156 @@ const MatchCard: React.FC<{
   onSettleBet,
   isWritePending
 }) => {
-  const { address } = useAccount()
-  const { useGetMatch, useGetMatchBets, useGetUserBet } = useFootballBettingContract()
+    const { address } = useAccount()
+    const { useGetMatch, useGetMatchBets, useGetUserBet } = useFootballBettingContract()
 
-  const { data: match } = useGetMatch(matchId)
-  const { data: matchBets } = useGetMatchBets(matchId)
-  const { data: userBet } = useGetUserBet(matchId, address as `0x${string}`)
+    const { data: match } = useGetMatch(matchId)
+    const { data: matchBets } = useGetMatchBets(matchId)
+    const { data: userBet } = useGetUserBet(matchId, address as `0x${string}`)
 
-  if (!match) return <div className="card">加载中...</div>
+    if (!match) return <div className="card">加载中...</div>
 
-  // Helper functions
-  const getMatchStatus = (match: any) => {
-    const now = Math.floor(Date.now() / 1000)
-    if (match.isFinished) return 'finished'
-    if (now >= Number(match.bettingStartTime) && now <= Number(match.bettingEndTime)) return 'betting'
-    if (now < Number(match.bettingStartTime)) return 'upcoming'
-    return 'closed'
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'betting': return '押注中'
-      case 'upcoming': return '即将开始'
-      case 'closed': return '押注结束'
-      case 'finished': return '已结束'
-      default: return '未知'
+    // Helper functions
+    const getMatchStatus = (match: any) => {
+      const now = Math.floor(Date.now() / 1000)
+      if (match.isFinished) return 'finished'
+      if (now >= Number(match.bettingStartTime) && now <= Number(match.bettingEndTime)) return 'betting'
+      if (now < Number(match.bettingStartTime)) return 'upcoming'
+      return 'closed'
     }
-  }
 
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'betting': return 'status-betting'
-      case 'upcoming': return 'status-active'
-      case 'closed': return 'status-finished'
-      case 'finished': return 'status-finished'
-      default: return 'status-finished'
+    const getStatusText = (status: string) => {
+      switch (status) {
+        case 'betting': return '押注中'
+        case 'upcoming': return '即将开始'
+        case 'closed': return '押注结束'
+        case 'finished': return '已结束'
+        default: return '未知'
+      }
     }
-  }
 
-  const getResultText = (result: number) => {
-    switch (result) {
-      case 1: return '主队获胜'
-      case 2: return '客队获胜'
-      case 3: return '平局'
-      default: return '待定'
+    const getStatusClass = (status: string) => {
+      switch (status) {
+        case 'betting': return 'status-betting'
+        case 'upcoming': return 'status-active'
+        case 'closed': return 'status-finished'
+        case 'finished': return 'status-finished'
+        default: return 'status-finished'
+      }
     }
-  }
 
-  const formatTime = (timestamp: bigint) => {
-    return formatDistanceToNow(new Date(Number(timestamp) * 1000), {
-      addSuffix: true,
-    })
-  }
+    const getResultText = (result: number) => {
+      switch (result) {
+        case 1: return '主队获胜'
+        case 2: return '客队获胜'
+        case 3: return '平局'
+        default: return '待定'
+      }
+    }
 
-  const status = getMatchStatus(match)
-  const hasBet = Boolean(userBet?.betDirection && userBet.betDirection !== '0x0000000000000000000000000000000000000000000000000000000000000000')
-  const canBet = Boolean(status === 'betting' && address && !hasBet)
-  const canSettle = Boolean(match.isFinished && hasBet && !userBet?.hasSettled && matchBets?.isTotalDecrypted)
-  
-  console.log(`MatchCard ${matchId}:`, {
-    selectedMatch,
-    matchId,
-    isSelected: selectedMatch === matchId,
-    canBet,
-    status,
-    address: !!address,
-    hasBet,
-    bettingStartTime: match.bettingStartTime,
-    bettingEndTime: match.bettingEndTime,
-    currentTime: Math.floor(Date.now() / 1000),
-    userBet: userBet
-  })
+    const formatTime = (timestamp: bigint) => {
+      return formatDistanceToNow(new Date(Number(timestamp) * 1000), {
+        addSuffix: true,
+      })
+    }
 
-  return (
-    <div className="match-card card">
-      <div className="flex justify-between items-start mb-4">
-        <h3>{match.matchName}</h3>
-        <span className={`status-badge ${getStatusClass(status)}`}>
-          {getStatusText(status)}
-        </span>
-      </div>
+    const status = getMatchStatus(match)
+    const hasBet = Boolean(userBet?.betDirection && userBet.betDirection !== '0x0000000000000000000000000000000000000000000000000000000000000000')
+    const canBet = Boolean(status === 'betting' && address && !hasBet)
+    const canSettle = Boolean(match.isFinished && hasBet && !userBet?.hasSettled && matchBets?.isTotalDecrypted)
 
-      <div className="text-center mb-4">
-        <div className="text-2xl font-bold mb-2">
-          {match.homeTeam} vs {match.awayTeam}
+    return (
+      <div className="match-card card">
+        <div className="flex justify-between items-start mb-4">
+          <h3>{match.matchName}</h3>
+          <span className={`status-badge ${getStatusClass(status)}`}>
+            {getStatusText(status)}
+          </span>
         </div>
-      </div>
 
-      <div className="text-sm text-gray mb-4">
-        <p>押注时间: {formatTime(match.bettingStartTime)} 至 {formatTime(match.bettingEndTime)}</p>
-        <p>比赛时间: {formatTime(match.matchTime)}</p>
-        {match.isFinished && (
-          <p className="text-green font-bold mt-2">
-            比赛结果: {getResultText(match.result)}
-          </p>
-        )}
-      </div>
-
-      {/* 显示押注统计（如果已解密） */}
-      {Boolean(matchBets?.isTotalDecrypted) && (
-        <div className="mb-4">
-          <p className="text-sm font-bold mb-2">押注统计:</p>
-          <div className="flex justify-between text-sm">
-            <span>主队获胜: <strong>{Number(matchBets?.decryptedHomeWinTotal || 0)}注</strong></span>
-            <span>客队获胜: <strong>{Number(matchBets?.decryptedAwayWinTotal || 0)}注</strong></span>
-            <span>平局: <strong>{Number(matchBets?.decryptedDrawTotal || 0)}注</strong></span>
+        <div className="text-center mb-4">
+          <div className="text-2xl font-bold mb-2">
+            {match.homeTeam} vs {match.awayTeam}
           </div>
         </div>
-      )}
 
-      {/* 用户押注状态 */}
-      {hasBet && (
-        <div className="text-sm text-green mb-4">
-          <p>✓ 您已押注此比赛</p>
-          {userBet?.hasSettled && <p>✓ 已结算</p>}
+        <div className="text-sm text-gray mb-4">
+          <p>押注时间: {formatTime(match.bettingStartTime)} 至 {formatTime(match.bettingEndTime)}</p>
+          <p>比赛时间: {formatTime(match.matchTime)}</p>
+          {match.isFinished && (
+            <p className="text-green font-bold mt-2">
+              比赛结果: {getResultText(match.result)}
+            </p>
+          )}
         </div>
-      )}
 
-      {/* 押注界面 */}
-      <div>
-        <p className="text-xs text-gray mb-2">
-          调试：canBet={canBet.toString()}, status={status}, hasAddress={!!address}, hasBet={hasBet}, 
-          selected={selectedMatch?.toString()}, matchId={matchId.toString()}
-        </p>
-        {canBet ? (
+        {/* 显示押注统计（如果已解密） */}
+        {Boolean(matchBets?.isTotalDecrypted) && (
+          <div className="mb-4">
+            <p className="text-sm font-bold mb-2">押注统计:</p>
+            <div className="flex justify-between text-sm">
+              <span>主队获胜: <strong>{Number(matchBets?.decryptedHomeWinTotal || 0)}注</strong></span>
+              <span>客队获胜: <strong>{Number(matchBets?.decryptedAwayWinTotal || 0)}注</strong></span>
+              <span>平局: <strong>{Number(matchBets?.decryptedDrawTotal || 0)}注</strong></span>
+            </div>
+          </div>
+        )}
+
+        {/* 用户押注状态 */}
+        {hasBet && (
+          <div className="text-sm text-green mb-4">
+            <p>✓ 您已押注此比赛</p>
+            {userBet?.hasSettled && <p>✓ 已结算</p>}
+          </div>
+        )}
+
+        {/* 押注界面 */}
+        <div>
+          <p className="text-xs text-gray mb-2">
+            调试：canBet={canBet.toString()}, status={status}, hasAddress={!!address}, hasBet={hasBet},
+            selected={selectedMatch?.toString()}, matchId={matchId.toString()}
+          </p>
+          {canBet ? (
+            <button
+              className="button w-full"
+              onClick={() => {
+                console.log('=== 押注按钮点击 ===')
+                console.log('打开弹窗 matchId:', matchId)
+                openBettingModal(matchId)
+              }}
+            >
+              押注
+            </button>
+          ) : (
+            <p className="text-sm text-gray">无法押注：{
+              !address ? '请连接钱包' :
+                status !== 'betting' ? `比赛状态: ${status}` :
+                  hasBet ? '您已押注此比赛' :
+                    '未知原因'
+            }</p>
+          )}
+        </div>
+
+        {/* 结算按钮 */}
+        {canSettle && (
           <button
-            className="button w-full"
-            onClick={() => {
-              console.log('=== 押注按钮点击 ===')
-              console.log('打开弹窗 matchId:', matchId)
-              openBettingModal(matchId)
-            }}
+            className="button button-secondary w-full"
+            onClick={() => onSettleBet(matchId)}
+            disabled={isWritePending}
           >
-            押注
+            {isWritePending ? '结算中...' : '结算奖励'}
           </button>
-        ) : (
-          <p className="text-sm text-gray">无法押注：{
-            !address ? '请连接钱包' : 
-            status !== 'betting' ? `比赛状态: ${status}` : 
-            hasBet ? '您已押注此比赛' : 
-            '未知原因'
-          }</p>
+        )}
+
+        {/* 状态提示 */}
+        {!canBet && !canSettle && status === 'betting' && hasBet && (
+          <div className="text-center text-gray">
+            您已押注此比赛，请等待比赛结束
+          </div>
         )}
       </div>
-
-      {/* 结算按钮 */}
-      {canSettle && (
-        <button
-          className="button button-secondary w-full"
-          onClick={() => onSettleBet(matchId)}
-          disabled={isWritePending}
-        >
-          {isWritePending ? '结算中...' : '结算奖励'}
-        </button>
-      )}
-
-      {/* 状态提示 */}
-      {!canBet && !canSettle && status === 'betting' && hasBet && (
-        <div className="text-center text-gray">
-          您已押注此比赛，请等待比赛结束
-        </div>
-      )}
-    </div>
-  )
-}
+    )
+  }
 
 // 押注弹窗组件
 const BettingModal: React.FC<{
@@ -388,96 +384,96 @@ const BettingModal: React.FC<{
   onClose,
   isWritePending
 }) => {
-  const { useGetMatch } = useFootballBettingContract()
-  const { data: match } = useGetMatch(matchId)
+    const { useGetMatch } = useFootballBettingContract()
+    const { data: match } = useGetMatch(matchId)
 
-  if (!match) return null
+    if (!match) return null
 
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>押注 - {match.matchName}</h3>
-          <button className="modal-close" onClick={onClose}>×</button>
-        </div>
-        
-        <div className="modal-body">
-          <div className="text-center mb-4">
-            <div className="text-lg font-bold">
-              {match.homeTeam} vs {match.awayTeam}
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h3>押注 - {match.matchName}</h3>
+            <button className="modal-close" onClick={onClose}>×</button>
+          </div>
+
+          <div className="modal-body">
+            <div className="text-center mb-4">
+              <div className="text-lg font-bold">
+                {match.homeTeam} vs {match.awayTeam}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">选择押注方向</label>
+              <div className="flex gap-3 mb-4">
+                <div
+                  className={`bet-option flex-1 ${betDirection === BetDirection.HomeWin ? 'selected' : ''}`}
+                  onClick={() => setBetDirection(BetDirection.HomeWin)}
+                >
+                  <div className="font-bold">主队获胜</div>
+                  <div className="text-sm">{match.homeTeam}</div>
+                </div>
+                <div
+                  className={`bet-option flex-1 ${betDirection === BetDirection.AwayWin ? 'selected' : ''}`}
+                  onClick={() => setBetDirection(BetDirection.AwayWin)}
+                >
+                  <div className="font-bold">客队获胜</div>
+                  <div className="text-sm">{match.awayTeam}</div>
+                </div>
+                <div
+                  className={`bet-option flex-1 ${betDirection === BetDirection.Draw ? 'selected' : ''}`}
+                  onClick={() => setBetDirection(BetDirection.Draw)}
+                >
+                  <div className="font-bold">平局</div>
+                  <div className="text-sm">平局</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">押注数量（注）</label>
+              <input
+                type="number"
+                min="1"
+                className="input"
+                placeholder="1"
+                value={betCount}
+                onChange={(e) => setBetCount(e.target.value)}
+              />
+              <p className="text-sm text-gray">
+                将消耗 {Number(betCount) * BET_UNIT} 积分
+              </p>
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">选择押注方向</label>
-            <div className="flex gap-3 mb-4">
-              <div
-                className={`bet-option flex-1 ${betDirection === BetDirection.HomeWin ? 'selected' : ''}`}
-                onClick={() => setBetDirection(BetDirection.HomeWin)}
+          <div className="modal-footer">
+            <div className="flex gap-2">
+              <button
+                className="button flex-1"
+                onClick={() => {
+                  console.log('=== 弹窗确认押注 ===')
+                  console.log('matchId:', matchId)
+                  console.log('betDirection:', betDirection)
+                  console.log('betCount:', betCount)
+                  onPlaceBet(matchId)
+                }}
+                disabled={isWritePending}
               >
-                <div className="font-bold">主队获胜</div>
-                <div className="text-sm">{match.homeTeam}</div>
-              </div>
-              <div
-                className={`bet-option flex-1 ${betDirection === BetDirection.AwayWin ? 'selected' : ''}`}
-                onClick={() => setBetDirection(BetDirection.AwayWin)}
+                {isWritePending ? '押注中...' : '确认押注'}
+              </button>
+              <button
+                className="button button-secondary"
+                onClick={onClose}
+                disabled={isWritePending}
               >
-                <div className="font-bold">客队获胜</div>
-                <div className="text-sm">{match.awayTeam}</div>
-              </div>
-              <div
-                className={`bet-option flex-1 ${betDirection === BetDirection.Draw ? 'selected' : ''}`}
-                onClick={() => setBetDirection(BetDirection.Draw)}
-              >
-                <div className="font-bold">平局</div>
-                <div className="text-sm">平局</div>
-              </div>
+                取消
+              </button>
             </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">押注数量（注）</label>
-            <input
-              type="number"
-              min="1"
-              className="input"
-              placeholder="1"
-              value={betCount}
-              onChange={(e) => setBetCount(e.target.value)}
-            />
-            <p className="text-sm text-gray">
-              将消耗 {Number(betCount) * BET_UNIT} 积分
-            </p>
-          </div>
-        </div>
-
-        <div className="modal-footer">
-          <div className="flex gap-2">
-            <button
-              className="button flex-1"
-              onClick={() => {
-                console.log('=== 弹窗确认押注 ===')
-                console.log('matchId:', matchId)
-                console.log('betDirection:', betDirection)
-                console.log('betCount:', betCount)
-                onPlaceBet(matchId)
-              }}
-              disabled={isWritePending}
-            >
-              {isWritePending ? '押注中...' : '确认押注'}
-            </button>
-            <button
-              className="button button-secondary"
-              onClick={onClose}
-              disabled={isWritePending}
-            >
-              取消
-            </button>
           </div>
         </div>
       </div>
-    </div>
-  )
-}
+    )
+  }
 
 export default MatchList

@@ -33,8 +33,8 @@ export async function encryptBetData(contractAddress: string, userAddress: strin
   const instance = getFHEVMInstance()
 
   const buffer = instance.createEncryptedInput(contractAddress, userAddress)
-  buffer.add8(BigInt(betDirection))
-  buffer.add32(BigInt(betCount))
+  buffer.add8((betDirection))
+  buffer.add32((betCount))
 
   return await buffer.encrypt()
 }

@@ -86,10 +86,12 @@ export function useFootballBettingContract() {
 
   const placeBet = async (
     matchId: bigint,
-    encryptedBetDirection: `0x${string}`,
-    encryptedBetCount: `0x${string}`,
-    inputProof: `0x${string}`
+    encryptedBetDirection: any,
+    encryptedBetCount: any,
+    inputProof: any
   ) => {
+    console.log("placeBet:", encryptedBetCount, encryptedBetDirection, inputProof);
+
     return writeContractAsync({
       address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
@@ -169,7 +171,7 @@ export function useFootballBettingContract() {
     useGetMatchBets,
     useGetUserPoints,
     useGetUserBet,
-    
+
     // Write functions
     buyPoints,
     createMatch,
@@ -177,13 +179,13 @@ export function useFootballBettingContract() {
     finishMatch,
     settleBet,
     withdraw,
-    
+
     // Event watchers
     useWatchMatchCreated,
     useWatchBetPlaced,
     useWatchMatchFinished,
     useWatchBetSettled,
-    
+
     // Loading states
     isWritePending,
   }

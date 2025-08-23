@@ -8,9 +8,9 @@ const AdminPanel: React.FC = () => {
     homeTeam: '皇家马德里',
     awayTeam: '巴塞罗那',
     matchName: '国家德比',
-    bettingStartTime: new Date(Date.now() - 1000 * 60).toISOString().slice(0, 16), // 1分钟前开始（立即可押注）
-    bettingEndTime: new Date(Date.now() + 1000 * 60 * 60).toISOString().slice(0, 16), // 1小时后结束
-    matchTime: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString().slice(0, 16), // 2小时后比赛
+    bettingStartTime: '',
+    bettingEndTime: '',
+    matchTime: '',
   })
   
   const [finishMatchData, setFinishMatchData] = useState({
@@ -112,6 +112,7 @@ const AdminPanel: React.FC = () => {
     }))
   }
 
+
   const handleFinishInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFinishMatchData(prev => ({
@@ -129,7 +130,7 @@ const AdminPanel: React.FC = () => {
       <div className="card">
         <h2>创建新比赛</h2>
         <form onSubmit={handleCreateMatch}>
-          <div className="grid grid-2 gap-4">
+          <div className="grid grid-3 gap-4">
             <div className="form-group">
               <label className="form-label">主队名称</label>
               <input
@@ -155,22 +156,22 @@ const AdminPanel: React.FC = () => {
                 required
               />
             </div>
+
+            <div className="form-group">
+              <label className="form-label">比赛名称</label>
+              <input
+                type="text"
+                name="matchName"
+                className="input"
+                placeholder="例如：国家德比"
+                value={formData.matchName}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
           </div>
           
-          <div className="form-group">
-            <label className="form-label">比赛名称</label>
-            <input
-              type="text"
-              name="matchName"
-              className="input"
-              placeholder="例如：国家德比"
-              value={formData.matchName}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          
-          <div className="grid grid-2 gap-4">
+          <div className="grid grid-3 gap-4">
             <div className="form-group">
               <label className="form-label">押注开始时间</label>
               <input
@@ -194,18 +195,18 @@ const AdminPanel: React.FC = () => {
                 required
               />
             </div>
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label">比赛时间</label>
-            <input
-              type="datetime-local"
-              name="matchTime"
-              className="input"
-              value={formData.matchTime}
-              onChange={handleInputChange}
-              required
-            />
+
+            <div className="form-group">
+              <label className="form-label">比赛时间</label>
+              <input
+                type="datetime-local"
+                name="matchTime"
+                className="input"
+                value={formData.matchTime}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
           </div>
           
           <button
