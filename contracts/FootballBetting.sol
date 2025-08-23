@@ -7,10 +7,10 @@ import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 contract FootballBetting is SepoliaConfig {
     address public owner;
 
-    // 用户积分映射 (加密的)
+    // User points mapping (encrypted)
     mapping(address => euint32) private userPoints;
 
-    // 比赛结构
+    // Match structure
     struct Match {
         uint256 id;
         string homeTeam;
@@ -21,48 +21,48 @@ contract FootballBetting is SepoliaConfig {
         uint256 matchTime;
         bool isActive;
         bool isFinished;
-        uint8 result; // 1: 主场赢, 2: 客场赢, 3: 平局, 0: 未结束
+        uint8 result; // 1: home win, 2: away win, 3: draw, 0: not finished
         bool isResultDecrypted;
     }
 
-    // 用户押注结构
+    // User bet structure
     struct UserBet {
-        euint8 betDirection; // 加密的押注方向: 1: 主场赢, 2: 客场赢, 3: 平局
-        euint32 betAmount; // 加密的押注数量
-        bool hasSettled; // 是否已结算
-        bool isDecrypted; // 是否已解密
+        euint8 betDirection; // Encrypted bet direction: 1: home win, 2: away win, 3: draw
+        euint32 betAmount; // Encrypted bet amount
+        bool hasSettled; // Whether settled
+        bool isDecrypted; // Whether decrypted
     }
 
-    // 比赛押注统计
+    // Match betting statistics
     struct MatchBets {
-        euint32 homeWinTotal; // 主场赢总押注
-        euint32 awayWinTotal; // 客场赢总押注
-        euint32 drawTotal; // 平局总押注
-        euint32 totalBetAmount; // 总押注积分
-        bool isTotalDecrypted; // 总数是否已解密
+        euint32 homeWinTotal; // Total bets for home win
+        euint32 awayWinTotal; // Total bets for away win
+        euint32 drawTotal; // Total bets for draw
+        euint32 totalBetAmount; // Total bet points
+        bool isTotalDecrypted; // Whether totals are decrypted
         uint32 decryptedHomeWinTotal;
         uint32 decryptedAwayWinTotal;
         uint32 decryptedDrawTotal;
         uint32 decryptedTotalBetAmount;
     }
 
-    // 存储所有比赛
+    // Store all matches
     mapping(uint256 => Match) public matches;
-    // 比赛押注统计
+    // Match betting statistics
     mapping(uint256 => MatchBets) public matchBets;
-    // 用户在特定比赛的押注 matchId => user => UserBet
+    // User bets for specific matches matchId => user => UserBet
     mapping(uint256 => mapping(address => UserBet)) public userBets;
-    // 比赛计数器
+    // Match counter
     uint256 public matchCounter;
 
-    // 解密请求ID到比赛ID的映射
+    // Mapping from decryption request ID to match ID
     mapping(uint256 requestId => uint256 matchId) private decryptionRequestToMatch;
 
-    // 常量
-    uint256 public constant BET_UNIT = 100; // 每注100积分
-    uint256 public constant ETH_TO_POINTS_RATE = 100000; // 1 ETH = 100000 积分
+    // Constants
+    uint256 public constant BET_UNIT = 100; // 100 points per bet
+    uint256 public constant ETH_TO_POINTS_RATE = 100000; // 1 ETH = 100000 points
 
-    // 事件
+    // Events
     event PointsPurchased(address indexed user, uint256 ethAmount, uint256 pointsAmount);
     event MatchCreated(uint256 indexed matchId, string homeTeam, string awayTeam, string matchName);
     event BetPlaced(uint256 indexed matchId, address indexed user);
@@ -101,7 +101,7 @@ contract FootballBetting is SepoliaConfig {
         matchCounter = 0;
     }
 
-    // 充值ETH获取积分
+    // Buy points with ETH
     function buyPoints() external payable {
         require(msg.value > 0, "Must send ETH to buy points");
 
@@ -116,14 +116,14 @@ contract FootballBetting is SepoliaConfig {
         euint32 newPoints = FHE.add(currentPoints, uint32(pointsToAdd));
         userPoints[msg.sender] = newPoints;
 
-        // 设置ACL权限
+        // Set ACL permissions
         FHE.allowThis(userPoints[msg.sender]);
         FHE.allow(userPoints[msg.sender], msg.sender);
 
         emit PointsPurchased(msg.sender, msg.value, pointsToAdd);
     }
 
-    // 创建比赛
+    // Create match
     function createMatch(
         string memory homeTeam,
         string memory awayTeam,
@@ -152,7 +152,7 @@ contract FootballBetting is SepoliaConfig {
             isResultDecrypted: false
         });
 
-        // 初始化比赛押注统计
+        // Initialize match betting statistics
         matchBets[matchCounter] = MatchBets({
             homeWinTotal: FHE.asEuint32(0),
             awayWinTotal: FHE.asEuint32(0),
@@ -165,7 +165,7 @@ contract FootballBetting is SepoliaConfig {
             decryptedTotalBetAmount: 0
         });
 
-        // 设置ACL权限
+        // Set ACL permissions
         FHE.allowThis(matchBets[matchCounter].homeWinTotal);
         FHE.allowThis(matchBets[matchCounter].awayWinTotal);
         FHE.allowThis(matchBets[matchCounter].drawTotal);
@@ -174,34 +174,34 @@ contract FootballBetting is SepoliaConfig {
         emit MatchCreated(matchCounter, homeTeam, awayTeam, matchName);
     }
 
-    // 用户押注
+    // User place bet
     function placeBet(
         uint256 matchId,
         externalEuint8 encryptedBetDirection,
         externalEuint32 encryptedBetCount,
         bytes calldata inputProof
     ) external validMatch(matchId) bettingOpen(matchId) {
-        // 验证并转换外部加密输入
+        // Validate and convert external encrypted inputs
         euint8 betDirection = FHE.fromExternal(encryptedBetDirection, inputProof);
         euint32 betCount = FHE.fromExternal(encryptedBetCount, inputProof);
 
-        // 检查用户是否已经在此比赛中押注
+        // Check if user has already bet on this match
         require(!FHE.isInitialized(userBets[matchId][msg.sender].betDirection), "Already bet on this match");
 
-        // 计算总押注金额
+        // Calculate total bet amount
         euint32 totalBetAmount = FHE.mul(betCount, uint32(BET_UNIT));
 
-        // 检查用户积分是否足够
+        // Check if user has enough points
         euint32 currentPoints = userPoints[msg.sender];
         require(FHE.isInitialized(currentPoints), "No points available");
 
         ebool hasEnoughPoints = FHE.ge(currentPoints, totalBetAmount);
 
-        // 扣除积分
+        // Deduct points
         euint32 newPoints = FHE.select(hasEnoughPoints, FHE.sub(currentPoints, totalBetAmount), currentPoints);
         userPoints[msg.sender] = newPoints;
 
-        // 记录用户押注
+        // Record user bet
         userBets[matchId][msg.sender] = UserBet({
             betDirection: betDirection,
             betAmount: betCount,
@@ -209,11 +209,11 @@ contract FootballBetting is SepoliaConfig {
             isDecrypted: false
         });
 
-        // 更新比赛押注统计
+        // Update match betting statistics
         MatchBets storage matchBet = matchBets[matchId];
 
-        // 根据押注方向更新对应统计
-        // 使用FHE.select来条件性地添加押注
+        // Update statistics based on bet direction
+        // Use FHE.select to conditionally add bets
         ebool isHomeWin = FHE.eq(betDirection, FHE.asEuint8(1));
         ebool isAwayWin = FHE.eq(betDirection, FHE.asEuint8(2));
         ebool isDraw = FHE.eq(betDirection, FHE.asEuint8(3));
@@ -227,7 +227,7 @@ contract FootballBetting is SepoliaConfig {
         matchBet.drawTotal = FHE.add(matchBet.drawTotal, drawAddition);
         matchBet.totalBetAmount = FHE.add(matchBet.totalBetAmount, totalBetAmount);
 
-        // 设置ACL权限
+        // Set ACL permissions
         FHE.allowThis(userPoints[msg.sender]);
         FHE.allow(userPoints[msg.sender], msg.sender);
 
@@ -244,7 +244,7 @@ contract FootballBetting is SepoliaConfig {
         emit BetPlaced(matchId, msg.sender);
     }
 
-    // 项目方结束押注并输入比赛结果
+    // Project owner finishes match and inputs result
     function finishMatch(uint256 matchId, uint8 result) external onlyOwner validMatch(matchId) {
         require(result >= 1 && result <= 3, "Invalid result: 1=home win, 2=away win, 3=draw");
         require(block.timestamp > matches[matchId].bettingEndTime, "Betting period not ended yet");
@@ -256,28 +256,28 @@ contract FootballBetting is SepoliaConfig {
         emit MatchFinished(matchId, result);
     }
 
-    // 请求解密比赛押注统计
+    // Request to decrypt match betting totals
     function requestDecryptMatchTotals(uint256 matchId) internal validMatch(matchId) {
         require(matches[matchId].isFinished, "Match not finished yet");
         require(!matchBets[matchId].isTotalDecrypted, "Already decrypted");
 
         MatchBets storage matchBet = matchBets[matchId];
 
-        // 准备要解密的密文
+        // Prepare ciphertexts to decrypt
         bytes32[] memory cts = new bytes32[](4);
         cts[0] = FHE.toBytes32(matchBet.homeWinTotal);
         cts[1] = FHE.toBytes32(matchBet.awayWinTotal);
         cts[2] = FHE.toBytes32(matchBet.drawTotal);
         cts[3] = FHE.toBytes32(matchBet.totalBetAmount);
 
-        // 请求解密并存储请求ID到比赛ID的映射
+        // Request decryption and store requestId to matchId mapping
         uint256 requestId = FHE.requestDecryption(cts, this.decryptMatchTotalsCallback.selector);
         decryptionRequestToMatch[requestId] = matchId;
 
         emit DecryptionRequested(matchId);
     }
 
-    // 解密回调函数 - 完整实现
+    // Decryption callback function - complete implementation
     function decryptMatchTotalsCallback(
         uint256 requestId,
         uint32 homeWinTotal,
@@ -286,16 +286,16 @@ contract FootballBetting is SepoliaConfig {
         uint32 totalBetAmount,
         bytes[] memory signatures
     ) public {
-        // 验证签名
+        // Verify signatures
         FHE.checkSignatures(requestId, signatures);
 
-        // 获取对应的比赛ID
+        // Get corresponding match ID
         uint256 matchId = decryptionRequestToMatch[requestId];
         require(matchId != 0, "Invalid request ID");
         require(matches[matchId].isFinished, "Match not finished");
         require(!matchBets[matchId].isTotalDecrypted, "Already decrypted");
 
-        // 存储解密后的数据
+        // Store decrypted data
         MatchBets storage matchBet = matchBets[matchId];
         matchBet.decryptedHomeWinTotal = homeWinTotal;
         matchBet.decryptedAwayWinTotal = awayWinTotal;
@@ -303,14 +303,14 @@ contract FootballBetting is SepoliaConfig {
         matchBet.decryptedTotalBetAmount = totalBetAmount;
         matchBet.isTotalDecrypted = true;
 
-        // 清理映射以节省 gas
+        // Clean up mapping to save gas
         delete decryptionRequestToMatch[requestId];
 
-        // 发出事件
+        // Emit event
         emit MatchTotalsDecrypted(matchId, homeWinTotal, awayWinTotal, drawTotal, totalBetAmount);
     }
 
-    // 用户结算押注
+    // User settle bet
     function settleBet(uint256 matchId) external validMatch(matchId) {
         require(matches[matchId].isFinished, "Match not finished yet");
         require(matchBets[matchId].isTotalDecrypted, "Match totals not decrypted yet");
@@ -319,7 +319,7 @@ contract FootballBetting is SepoliaConfig {
 
         UserBet storage userBet = userBets[matchId][msg.sender];
 
-        // 请求解密用户的押注信息
+        // Request to decrypt user bet information
         bytes32[] memory cts = new bytes32[](2);
         cts[0] = FHE.toBytes32(userBet.betDirection);
         cts[1] = FHE.toBytes32(userBet.betAmount);
@@ -329,7 +329,7 @@ contract FootballBetting is SepoliaConfig {
         emit UserDecryptionRequested(matchId, msg.sender);
     }
 
-    // 用户押注解密回调函数
+    // User bet decryption callback function
     function decryptUserBetCallback(
         uint256 requestId,
         uint8 betDirection,
@@ -338,33 +338,33 @@ contract FootballBetting is SepoliaConfig {
     ) public {
         FHE.checkSignatures(requestId, signatures);
 
-        // 简化实现：遍历寻找对应的用户和比赛
-        // 实际应该存储requestId到user和matchId的映射
+        // Simplified implementation: iterate to find corresponding user and match
+        // Should store requestId to user and matchId mapping in production
         for (uint256 matchId = 1; matchId <= matchCounter; matchId++) {
             if (matches[matchId].isFinished && matchBets[matchId].isTotalDecrypted) {
                 for (uint256 i = 0; i < 10; i++) {
-                    // 简化实现，实际应该有更好的方法
-                    address user = address(uint160(i)); // 这里需要实际的用户地址映射
+                    // Simplified implementation, should have better method in production
+                    address user = address(uint160(i)); // Need actual user address mapping here
                     UserBet storage userBet = userBets[matchId][user];
 
                     if (FHE.isInitialized(userBet.betDirection) && !userBet.hasSettled && !userBet.isDecrypted) {
-                        // 检查是否获胜
+                        // Check if won
                         uint8 matchResult = matches[matchId].result;
                         if (betDirection == matchResult) {
-                            // 计算奖励
+                            // Calculate reward
                             uint32 winningPool;
                             uint32 totalWinners;
 
                             if (matchResult == 1) {
-                                // 主场赢
+                                // Home win
                                 winningPool = matchBets[matchId].decryptedTotalBetAmount;
                                 totalWinners = matchBets[matchId].decryptedHomeWinTotal;
                             } else if (matchResult == 2) {
-                                // 客场赢
+                                // Away win
                                 winningPool = matchBets[matchId].decryptedTotalBetAmount;
                                 totalWinners = matchBets[matchId].decryptedAwayWinTotal;
                             } else {
-                                // 平局
+                                // Draw
                                 winningPool = matchBets[matchId].decryptedTotalBetAmount;
                                 totalWinners = matchBets[matchId].decryptedDrawTotal;
                             }
@@ -372,7 +372,7 @@ contract FootballBetting is SepoliaConfig {
                             if (totalWinners > 0) {
                                 uint32 userWinAmount = (winningPool * betAmount) / totalWinners;
 
-                                // 增加用户积分
+                                // Add user points
                                 euint32 currentPoints = userPoints[user];
                                 if (!FHE.isInitialized(currentPoints)) {
                                     currentPoints = FHE.asEuint32(0);
@@ -381,7 +381,7 @@ contract FootballBetting is SepoliaConfig {
                                 euint32 newPoints = FHE.add(currentPoints, userWinAmount);
                                 userPoints[user] = newPoints;
 
-                                // 设置ACL权限
+                                // Set ACL permissions
                                 FHE.allowThis(userPoints[user]);
                                 FHE.allow(userPoints[user], user);
 
@@ -398,27 +398,27 @@ contract FootballBetting is SepoliaConfig {
         }
     }
 
-    // 查看用户积分
+    // View user points
     function getUserPoints(address user) external view returns (euint32) {
         return userPoints[user];
     }
 
-    // 查看比赛信息
+    // View match information
     function getMatch(uint256 matchId) external view returns (Match memory) {
         return matches[matchId];
     }
 
-    // 查看比赛押注统计
+    // View match betting statistics
     function getMatchBets(uint256 matchId) external view returns (MatchBets memory) {
         return matchBets[matchId];
     }
 
-    // 查看用户在特定比赛的押注
+    // View user bet for specific match
     function getUserBet(uint256 matchId, address user) external view returns (UserBet memory) {
         return userBets[matchId][user];
     }
 
-    // 提取合约余额（仅owner）
+    // Withdraw contract balance (owner only)
     function withdraw() external onlyOwner {
         uint256 balance = address(this).balance;
         require(balance > 0, "No balance to withdraw");
