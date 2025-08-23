@@ -1,3 +1,4 @@
+import { FhevmType } from "@fhevm/hardhat-plugin";
 import { task } from "hardhat/config";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import { toHex } from "viem";
@@ -21,15 +22,15 @@ task("football:deploy", "Deploy FootballBetting contract").setAction(
 );
 
 task("football:buy-points", "Buy FootPoints with ETH")
-  .addParam("contract", "Contract address")
   .addParam("amount", "ETH amount to spend (in ether)")
   .setAction(async function (taskArguments: any, hre: HardhatRuntimeEnvironment) {
-    const { ethers } = hre;
+    const { ethers, deployments } = hre;
     const signers = await ethers.getSigners();
     const signer = signers[0];
 
+    const deployment = await deployments.get("FootballBetting");
     const contractFactory = await ethers.getContractFactory("FootballBetting");
-    const contract = contractFactory.attach(taskArguments.contract);
+    const contract = contractFactory.attach(deployment.address);
 
     console.log(`Buying FootPoints with ${taskArguments.amount} ETH...`);
     
@@ -43,7 +44,6 @@ task("football:buy-points", "Buy FootPoints with ETH")
   });
 
 task("football:create-match", "Create a new football match")
-  .addParam("contract", "Contract address")
   .addParam("home", "Home team name")
   .addParam("away", "Away team name") 
   .addParam("name", "Match name")
@@ -51,12 +51,13 @@ task("football:create-match", "Create a new football match")
   .addParam("endtime", "Betting end time (unix timestamp)")
   .addParam("matchtime", "Match time (unix timestamp)")
   .setAction(async function (taskArguments: any, hre: HardhatRuntimeEnvironment) {
-    const { ethers } = hre;
+    const { ethers, deployments } = hre;
     const signers = await ethers.getSigners();
     const signer = signers[0];
 
+    const deployment = await deployments.get("FootballBetting");
     const contractFactory = await ethers.getContractFactory("FootballBetting");
-    const contract = contractFactory.attach(taskArguments.contract);
+    const contract = contractFactory.attach(deployment.address);
 
     console.log("Creating new match...");
     console.log(`Home: ${taskArguments.home}`);
@@ -78,21 +79,21 @@ task("football:create-match", "Create a new football match")
   });
 
 task("football:place-bet", "Place a bet on a match")
-  .addParam("contract", "Contract address")
   .addParam("matchid", "Match ID")
   .addParam("direction", "Bet direction: 1=home win, 2=away win, 3=draw")
   .addParam("amount", "Number of bets to place")
   .setAction(async function (taskArguments: any, hre: HardhatRuntimeEnvironment) {
-    const { ethers } = hre;
+    const { ethers, deployments } = hre;
     const { fhevm } = hre; // 在运行时获取fhevm
     const signers = await ethers.getSigners();
     const signer = signers[0];
 
+    const deployment = await deployments.get("FootballBetting");
     const contractFactory = await ethers.getContractFactory("FootballBetting");
-    const contract = contractFactory.attach(taskArguments.contract);
+    const contract = contractFactory.attach(deployment.address);
 
     // Create encrypted input
-    const input = fhevm.createEncryptedInput(taskArguments.contract, signer.address);
+    const input = fhevm.createEncryptedInput(deployment.address, signer.address);
     input.add8(parseInt(taskArguments.direction));  // bet direction
     input.add32(parseInt(taskArguments.amount));     // bet amount
     const encryptedInput = await input.encrypt();
@@ -114,16 +115,16 @@ task("football:place-bet", "Place a bet on a match")
   });
 
 task("football:finish-match", "Finish a match and set result")
-  .addParam("contract", "Contract address")
   .addParam("matchid", "Match ID")
   .addParam("result", "Match result: 1=home win, 2=away win, 3=draw")
   .setAction(async function (taskArguments: any, hre: HardhatRuntimeEnvironment) {
-    const { ethers } = hre;
+    const { ethers, deployments } = hre;
     const signers = await ethers.getSigners();
     const signer = signers[0];
 
+    const deployment = await deployments.get("FootballBetting");
     const contractFactory = await ethers.getContractFactory("FootballBetting");
-    const contract = contractFactory.attach(taskArguments.contract);
+    const contract = contractFactory.attach(deployment.address);
 
     console.log(`Finishing match ${taskArguments.matchid} with result ${taskArguments.result}...`);
     
@@ -138,15 +139,15 @@ task("football:finish-match", "Finish a match and set result")
   });
 
 task("football:decrypt-totals", "Request decryption of match betting totals")
-  .addParam("contract", "Contract address")
   .addParam("matchid", "Match ID")
   .setAction(async function (taskArguments: any, hre: HardhatRuntimeEnvironment) {
-    const { ethers } = hre;
+    const { ethers, deployments } = hre;
     const signers = await ethers.getSigners();
     const signer = signers[0];
 
+    const deployment = await deployments.get("FootballBetting");
     const contractFactory = await ethers.getContractFactory("FootballBetting");
-    const contract = contractFactory.attach(taskArguments.contract);
+    const contract = contractFactory.attach(deployment.address);
 
     console.log(`Requesting decryption for match ${taskArguments.matchid} betting totals...`);
     
@@ -159,15 +160,15 @@ task("football:decrypt-totals", "Request decryption of match betting totals")
   });
 
 task("football:settle-bet", "Settle user bet for a finished match")
-  .addParam("contract", "Contract address")
   .addParam("matchid", "Match ID")
   .setAction(async function (taskArguments: any, hre: HardhatRuntimeEnvironment) {
-    const { ethers } = hre;
+    const { ethers, deployments } = hre;
     const signers = await ethers.getSigners();
     const signer = signers[0];
 
+    const deployment = await deployments.get("FootballBetting");
     const contractFactory = await ethers.getContractFactory("FootballBetting");
-    const contract = contractFactory.attach(taskArguments.contract);
+    const contract = contractFactory.attach(deployment.address);
 
     console.log(`Settling bet for match ${taskArguments.matchid}...`);
     
@@ -180,34 +181,67 @@ task("football:settle-bet", "Settle user bet for a finished match")
   });
 
 task("football:get-points", "Get user FootPoints balance")
-  .addParam("contract", "Contract address")
-  .addParam("user", "User address (optional, defaults to first signer)", undefined, undefined, true)
+  .addParam("userindex", "User address (optional, defaults to first signer)")
+  .addParam("decrypt", "Decrypt the balance (requires proper ACL permissions)")
   .setAction(async function (taskArguments: any, hre: HardhatRuntimeEnvironment) {
-    const { ethers } = hre;
+    const { ethers, deployments, fhevm } = hre;
     const signers = await ethers.getSigners();
-    const signer = signers[0];
-
+    const signer = signers[taskArguments.userindex];
+    
+    const deployment = await deployments.get("FootballBetting");
     const contractFactory = await ethers.getContractFactory("FootballBetting");
-    const contract = contractFactory.attach(taskArguments.contract);
+    const contract = contractFactory.attach(deployment.address);
 
-    const userAddress = taskArguments.user || signer.address;
+    const userAddress = signer.address;
     console.log(`Getting FootPoints balance for ${userAddress}...`);
     
     const encryptedPoints = await contract.getUserPoints(userAddress);
     console.log(`Encrypted balance handle: ${encryptedPoints}`);
     
-    // To decrypt, user needs to call decryption separately using relayer SDK
-    console.log("To decrypt this balance, use the relayer SDK or fhevm tools.");
+    if (taskArguments.decrypt) {
+      try {
+        await fhevm.initializeCLIApi();
+        
+        // Check if the encrypted points is initialized (not zero)
+        if (encryptedPoints === "0x0000000000000000000000000000000000000000000000000000000000000000") {
+          console.log("No points found for this user (balance is 0)");
+          return;
+        }
+        
+        console.log("Attempting to decrypt balance...");
+        
+        // Decrypt the balance using user's key
+        const decryptedBalance = await fhevm.userDecryptEuint(
+          FhevmType.euint32,
+          encryptedPoints,
+          deployment.address,
+          signer
+        );
+        
+        console.log(`✅ Decrypted balance: ${decryptedBalance} FootPoints`);
+        // console.log(`   Equivalent to: ${decryptedBalance / 100000} ETH value`);
+      } catch (error) {
+        console.error("❌ Failed to decrypt balance:");
+        console.error("   This might be due to:");
+        console.error("   - User doesn't have ACL permissions for this ciphertext");
+        console.error("   - Balance is not initialized (user has no points)");
+        console.error("   - Network/relayer connection issues");
+        console.error(`   Error details: ${error.message}`);
+      }
+    } else {
+      console.log("💡 To decrypt this balance, add --decrypt flag");
+      console.log("   Note: Requires proper ACL permissions");
+    }
   });
 
 task("football:get-match", "Get match information")
-  .addParam("contract", "Contract address")
   .addParam("matchid", "Match ID")
   .setAction(async function (taskArguments: any, hre: HardhatRuntimeEnvironment) {
-    const { ethers } = hre;
+    const { ethers, deployments } = hre;
 
+    const deployment = await deployments.get("FootballBetting");
     const contractFactory = await ethers.getContractFactory("FootballBetting");
-    const contract = contractFactory.attach(taskArguments.contract);
+    const contract = contractFactory.attach(deployment.address);
 
     console.log(`Getting match ${taskArguments.matchid} information...`);
     
@@ -228,13 +262,13 @@ task("football:get-match", "Get match information")
   });
 
 task("football:get-match-bets", "Get match betting statistics")
-  .addParam("contract", "Contract address")
   .addParam("matchid", "Match ID")
   .setAction(async function (taskArguments: any, hre: HardhatRuntimeEnvironment) {
-    const { ethers } = hre;
+    const { ethers, deployments } = hre;
 
+    const deployment = await deployments.get("FootballBetting");
     const contractFactory = await ethers.getContractFactory("FootballBetting");
-    const contract = contractFactory.attach(taskArguments.contract);
+    const contract = contractFactory.attach(deployment.address);
 
     console.log(`Getting match ${taskArguments.matchid} betting statistics...`);
     
@@ -257,16 +291,16 @@ task("football:get-match-bets", "Get match betting statistics")
   });
 
 task("football:get-user-bet", "Get user bet information for a match")
-  .addParam("contract", "Contract address")
   .addParam("matchid", "Match ID")
   .addParam("user", "User address (optional, defaults to first signer)", undefined, undefined, true)
   .setAction(async function (taskArguments: any, hre: HardhatRuntimeEnvironment) {
-    const { ethers } = hre;
+    const { ethers, deployments } = hre;
     const signers = await ethers.getSigners();
     const signer = signers[0];
 
+    const deployment = await deployments.get("FootballBetting");
     const contractFactory = await ethers.getContractFactory("FootballBetting");
-    const contract = contractFactory.attach(taskArguments.contract);
+    const contract = contractFactory.attach(deployment.address);
 
     const userAddress = taskArguments.user || signer.address;
     console.log(`Getting user bet for ${userAddress} on match ${taskArguments.matchid}...`);
@@ -281,14 +315,14 @@ task("football:get-user-bet", "Get user bet information for a match")
   });
 
 task("football:withdraw", "Withdraw contract balance (owner only)")
-  .addParam("contract", "Contract address")
-  .setAction(async function (taskArguments: any, hre: HardhatRuntimeEnvironment) {
-    const { ethers } = hre;
+  .setAction(async function (_taskArguments: any, hre: HardhatRuntimeEnvironment) {
+    const { ethers, deployments } = hre;
     const signers = await ethers.getSigners();
     const signer = signers[0];
 
+    const deployment = await deployments.get("FootballBetting");
     const contractFactory = await ethers.getContractFactory("FootballBetting");
-    const contract = contractFactory.attach(taskArguments.contract);
+    const contract = contractFactory.attach(deployment.address);
 
     console.log("Withdrawing contract balance...");
     

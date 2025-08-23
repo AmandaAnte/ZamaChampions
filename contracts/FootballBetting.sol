@@ -95,7 +95,7 @@ contract FootballBetting is SepoliaConfig {
     function buyPoints() external payable {
         require(msg.value > 0, "Must send ETH to buy points");
         
-        uint256 pointsToAdd = msg.value * ETH_TO_POINTS_RATE;
+        uint256 pointsToAdd = (msg.value * ETH_TO_POINTS_RATE) / 1 ether;
         require(pointsToAdd <= type(uint32).max, "Points amount too large");
         
         euint32 currentPoints = userPoints[msg.sender];
