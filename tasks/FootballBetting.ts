@@ -47,13 +47,17 @@ task("football:create-match", "Create a new football match")
   .addParam("home", "Home team name")
   .addParam("away", "Away team name") 
   .addParam("name", "Match name")
-  .addParam("starttime", "Betting start time (unix timestamp)")
-  .addParam("endtime", "Betting end time (unix timestamp)")
-  .addParam("matchtime", "Match time (unix timestamp)")
+  // .addParam("starttime", "Betting start time (unix timestamp)")
+  // .addParam("endtime", "Betting end time (unix timestamp)")
+  // .addParam("matchtime", "Match time (unix timestamp)")
   .setAction(async function (taskArguments: any, hre: HardhatRuntimeEnvironment) {
     const { ethers, deployments } = hre;
     const signers = await ethers.getSigners();
     const signer = signers[0];
+
+    const starttime = Math.floor(Date.now() / 1000) + 4;
+    const endtime = Math.floor(Date.now() / 1000) + 60;
+    const matchtime = Math.floor(Date.now() / 1000) + 60;
 
     const deployment = await deployments.get("FootballBetting");
     const contractFactory = await ethers.getContractFactory("FootballBetting");
@@ -68,9 +72,9 @@ task("football:create-match", "Create a new football match")
       taskArguments.home,
       taskArguments.away, 
       taskArguments.name,
-      taskArguments.starttime,
-      taskArguments.endtime,
-      taskArguments.matchtime
+      starttime,
+      endtime,
+      matchtime
     );
     
     await tx.wait();
@@ -85,6 +89,7 @@ task("football:place-bet", "Place a bet on a match")
   .setAction(async function (taskArguments: any, hre: HardhatRuntimeEnvironment) {
     const { ethers, deployments } = hre;
     const { fhevm } = hre; // 在运行时获取fhevm
+    await fhevm.initializeCLIApi()
     const signers = await ethers.getSigners();
     const signer = signers[0];
 

@@ -39,6 +39,10 @@ const config: HardhatUserConfig = {
         mnemonic: MNEMONIC,
       },
       chainId: 31337,
+      mining: {
+        auto: true,
+        interval: [2000, 4000] 
+      },
     },
     anvil: {
       accounts: {
