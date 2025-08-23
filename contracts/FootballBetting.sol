@@ -55,6 +55,9 @@ contract FootballBetting is SepoliaConfig {
     // 比赛计数器
     uint256 public matchCounter;
 
+    // 解密请求ID到比赛ID的映射
+    mapping(uint256 requestId => uint256 matchId) private decryptionRequestToMatch;
+
     // 常量
     uint256 public constant BET_UNIT = 100; // 每注100积分
     uint256 public constant ETH_TO_POINTS_RATE = 100000; // 1 ETH = 100000 积分
@@ -67,6 +70,13 @@ contract FootballBetting is SepoliaConfig {
     event BetSettled(uint256 indexed matchId, address indexed user, uint256 winAmount);
     event DecryptionRequested(uint256 indexed matchId);
     event UserDecryptionRequested(uint256 indexed matchId, address indexed user);
+    event MatchTotalsDecrypted(
+        uint256 indexed matchId,
+        uint32 homeWinTotal,
+        uint32 awayWinTotal,
+        uint32 drawTotal,
+        uint32 totalBetAmount
+    );
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
@@ -260,13 +270,14 @@ contract FootballBetting is SepoliaConfig {
         cts[2] = FHE.toBytes32(matchBet.drawTotal);
         cts[3] = FHE.toBytes32(matchBet.totalBetAmount);
 
-        // 请求解密
-        FHE.requestDecryption(cts, this.decryptMatchTotalsCallback.selector);
+        // 请求解密并存储请求ID到比赛ID的映射
+        uint256 requestId = FHE.requestDecryption(cts, this.decryptMatchTotalsCallback.selector);
+        decryptionRequestToMatch[requestId] = matchId;
 
         emit DecryptionRequested(matchId);
     }
 
-    // 解密回调函数
+    // 解密回调函数 - 完整实现
     function decryptMatchTotalsCallback(
         uint256 requestId,
         uint32 homeWinTotal,
@@ -275,19 +286,28 @@ contract FootballBetting is SepoliaConfig {
         uint32 totalBetAmount,
         bytes[] memory signatures
     ) public {
+        // 验证签名
         FHE.checkSignatures(requestId, signatures);
 
-        // 找到对应的比赛ID（简化实现，实际应该存储requestId到matchId的映射）
-        for (uint256 i = 1; i <= matchCounter; i++) {
-            if (matches[i].isFinished && !matchBets[i].isTotalDecrypted) {
-                matchBets[i].decryptedHomeWinTotal = homeWinTotal;
-                matchBets[i].decryptedAwayWinTotal = awayWinTotal;
-                matchBets[i].decryptedDrawTotal = drawTotal;
-                matchBets[i].decryptedTotalBetAmount = totalBetAmount;
-                matchBets[i].isTotalDecrypted = true;
-                break;
-            }
-        }
+        // 获取对应的比赛ID
+        uint256 matchId = decryptionRequestToMatch[requestId];
+        require(matchId != 0, "Invalid request ID");
+        require(matches[matchId].isFinished, "Match not finished");
+        require(!matchBets[matchId].isTotalDecrypted, "Already decrypted");
+
+        // 存储解密后的数据
+        MatchBets storage matchBet = matchBets[matchId];
+        matchBet.decryptedHomeWinTotal = homeWinTotal;
+        matchBet.decryptedAwayWinTotal = awayWinTotal;
+        matchBet.decryptedDrawTotal = drawTotal;
+        matchBet.decryptedTotalBetAmount = totalBetAmount;
+        matchBet.isTotalDecrypted = true;
+
+        // 清理映射以节省 gas
+        delete decryptionRequestToMatch[requestId];
+
+        // 发出事件
+        emit MatchTotalsDecrypted(matchId, homeWinTotal, awayWinTotal, drawTotal, totalBetAmount);
     }
 
     // 用户结算押注
