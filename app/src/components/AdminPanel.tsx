@@ -5,12 +5,12 @@ const AdminPanel: React.FC = () => {
   const { createMatch, finishMatch, withdraw, isWritePending } = useFootballBettingContract()
   
   const [formData, setFormData] = useState({
-    homeTeam: '',
-    awayTeam: '',
-    matchName: '',
-    bettingStartTime: '',
-    bettingEndTime: '',
-    matchTime: '',
+    homeTeam: '皇家马德里',
+    awayTeam: '巴塞罗那',
+    matchName: '国家德比',
+    bettingStartTime: new Date(Date.now() - 1000 * 60).toISOString().slice(0, 16), // 1分钟前开始（立即可押注）
+    bettingEndTime: new Date(Date.now() + 1000 * 60 * 60).toISOString().slice(0, 16), // 1小时后结束
+    matchTime: new Date(Date.now() + 1000 * 60 * 60 * 2).toISOString().slice(0, 16), // 2小时后比赛
   })
   
   const [finishMatchData, setFinishMatchData] = useState({
@@ -40,16 +40,17 @@ const AdminPanel: React.FC = () => {
       return
     }
     
-    if (bettingStart <= Math.floor(Date.now() / 1000)) {
-      setError('押注开始时间必须在未来')
-      return
-    }
+    // 允许当前时间押注，用于测试
+    // if (bettingStart <= Math.floor(Date.now() / 1000)) {
+    //   setError('押注开始时间必须在未来')
+    //   return
+    // }
 
     try {
       setError('')
       setSuccess('')
       
-      createMatch(
+      await createMatch(
         homeTeam,
         awayTeam,
         matchName,

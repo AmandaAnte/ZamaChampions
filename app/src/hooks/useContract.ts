@@ -3,7 +3,7 @@ import { FOOTBALL_BETTING_ABI } from '../utils/contract'
 import { CONTRACT_ADDRESS } from '../utils/config'
 
 export function useFootballBettingContract() {
-  const { writeContract, isPending: isWritePending } = useWriteContract()
+  const { writeContractAsync, isPending: isWritePending } = useWriteContract()
 
   // Read functions
   const useOwner = () => useReadContract({
@@ -59,8 +59,8 @@ export function useFootballBettingContract() {
   })
 
   // Write functions
-  const buyPoints = (value: bigint) => {
-    return writeContract({
+  const buyPoints = async (value: bigint) => {
+    return writeContractAsync({
       address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       functionName: 'buyPoints',
@@ -68,7 +68,7 @@ export function useFootballBettingContract() {
     })
   }
 
-  const createMatch = (
+  const createMatch = async (
     homeTeam: string,
     awayTeam: string,
     matchName: string,
@@ -76,7 +76,7 @@ export function useFootballBettingContract() {
     bettingEndTime: bigint,
     matchTime: bigint
   ) => {
-    return writeContract({
+    return writeContractAsync({
       address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       functionName: 'createMatch',
@@ -84,13 +84,13 @@ export function useFootballBettingContract() {
     })
   }
 
-  const placeBet = (
+  const placeBet = async (
     matchId: bigint,
     encryptedBetDirection: `0x${string}`,
     encryptedBetCount: `0x${string}`,
     inputProof: `0x${string}`
   ) => {
-    return writeContract({
+    return writeContractAsync({
       address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       functionName: 'placeBet',
@@ -98,8 +98,8 @@ export function useFootballBettingContract() {
     })
   }
 
-  const finishMatch = (matchId: bigint, result: number) => {
-    return writeContract({
+  const finishMatch = async (matchId: bigint, result: number) => {
+    return writeContractAsync({
       address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       functionName: 'finishMatch',
@@ -107,8 +107,8 @@ export function useFootballBettingContract() {
     })
   }
 
-  const settleBet = (matchId: bigint) => {
-    return writeContract({
+  const settleBet = async (matchId: bigint) => {
+    return writeContractAsync({
       address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       functionName: 'settleBet',
@@ -116,8 +116,8 @@ export function useFootballBettingContract() {
     })
   }
 
-  const withdraw = () => {
-    return writeContract({
+  const withdraw = async () => {
+    return writeContractAsync({
       address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       functionName: 'withdraw',
