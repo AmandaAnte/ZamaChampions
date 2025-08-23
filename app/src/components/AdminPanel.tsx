@@ -59,14 +59,6 @@ const AdminPanel: React.FC = () => {
       )
       
       setSuccess('比赛创建成功！')
-      setFormData({
-        homeTeam: '',
-        awayTeam: '',
-        matchName: '',
-        bettingStartTime: '',
-        bettingEndTime: '',
-        matchTime: '',
-      })
     } catch (err: any) {
       console.error('创建比赛失败:', err)
       setError(err.message || '创建比赛失败')
@@ -127,32 +119,16 @@ const AdminPanel: React.FC = () => {
     }))
   }
 
-  // 获取当前时间，用于设置默认值
-  const now = new Date()
-  const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000)
-  const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000)
-  const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
-
-  const formatDateTime = (date: Date) => {
-    // 使用本地时间而不是UTC时间
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}`
-  }
 
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">管理面板</h1>
       
-      <div className="grid grid-2">
-        {/* 创建比赛 */}
-        <div className="card">
-          <h2>创建新比赛</h2>
-          <form onSubmit={handleCreateMatch}>
+      {/* 创建比赛 */}
+      <div className="card">
+        <h2>创建新比赛</h2>
+        <form onSubmit={handleCreateMatch}>
+          <div className="grid grid-2 gap-4">
             <div className="form-group">
               <label className="form-label">主队名称</label>
               <input
@@ -178,20 +154,22 @@ const AdminPanel: React.FC = () => {
                 required
               />
             </div>
-            
-            <div className="form-group">
-              <label className="form-label">比赛名称</label>
-              <input
-                type="text"
-                name="matchName"
-                className="input"
-                placeholder="例如：国家德比"
-                value={formData.matchName}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">比赛名称</label>
+            <input
+              type="text"
+              name="matchName"
+              className="input"
+              placeholder="例如：国家德比"
+              value={formData.matchName}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          
+          <div className="grid grid-2 gap-4">
             <div className="form-group">
               <label className="form-label">押注开始时间</label>
               <input
@@ -215,85 +193,84 @@ const AdminPanel: React.FC = () => {
                 required
               />
             </div>
-            
-            <div className="form-group">
-              <label className="form-label">比赛时间</label>
-              <input
-                type="datetime-local"
-                name="matchTime"
-                className="input"
-                value={formData.matchTime}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            
-            <button
-              type="submit"
-              className="button w-full"
-              disabled={isWritePending}
-            >
-              {isWritePending ? '创建中...' : '创建比赛'}
-            </button>
-          </form>
-        </div>
-
-        {/* 结束比赛 */}
-        <div className="card">
-          <h2>结束比赛</h2>
-          <form onSubmit={handleFinishMatch}>
-            <div className="form-group">
-              <label className="form-label">比赛ID</label>
-              <input
-                type="number"
-                name="matchId"
-                className="input"
-                placeholder="例如：1"
-                value={finishMatchData.matchId}
-                onChange={handleFinishInputChange}
-                required
-              />
-            </div>
-            
-            <div className="form-group">
-              <label className="form-label">比赛结果</label>
-              <select
-                name="result"
-                className="input"
-                value={finishMatchData.result}
-                onChange={handleFinishInputChange}
-                required
-              >
-                <option value="1">主队获胜</option>
-                <option value="2">客队获胜</option>
-                <option value="3">平局</option>
-              </select>
-            </div>
-            
-            <button
-              type="submit"
-              className="button w-full"
-              disabled={isWritePending}
-            >
-              {isWritePending ? '提交中...' : '结束比赛'}
-            </button>
-          </form>
-          
-          <div className="mt-4">
-            <button
-              className="button button-secondary w-full"
-              onClick={handleWithdraw}
-              disabled={isWritePending}
-            >
-              {isWritePending ? '提现中...' : '提取合约余额'}
-            </button>
           </div>
-        </div>
+          
+          <div className="form-group">
+            <label className="form-label">比赛时间</label>
+            <input
+              type="datetime-local"
+              name="matchTime"
+              className="input"
+              value={formData.matchTime}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          
+          <button
+            type="submit"
+            className="button w-full"
+            disabled={isWritePending}
+          >
+            {isWritePending ? '创建中...' : '创建比赛'}
+          </button>
+        </form>
       </div>
-
       {/* 状态消息 - 放在页面底部 */}
       {error && <div className="error mt-4">{error}</div>}
       {success && <div className="success mt-4">{success}</div>}
+      {/* 结束比赛 */}
+      <div className="card">
+        <h2>结束比赛</h2>
+        <form onSubmit={handleFinishMatch}>
+          <div className="form-group">
+            <label className="form-label">比赛ID</label>
+            <input
+              type="number"
+              name="matchId"
+              className="input"
+              placeholder="例如：1"
+              value={finishMatchData.matchId}
+              onChange={handleFinishInputChange}
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">比赛结果</label>
+            <select
+              name="result"
+              className="input"
+              value={finishMatchData.result}
+              onChange={handleFinishInputChange}
+              required
+            >
+              <option value="1">主队获胜</option>
+              <option value="2">客队获胜</option>
+              <option value="3">平局</option>
+            </select>
+          </div>
+          
+          <button
+            type="submit"
+            className="button w-full"
+            disabled={isWritePending}
+          >
+            {isWritePending ? '提交中...' : '结束比赛'}
+          </button>
+        </form>
+        
+        <div className="mt-4">
+          <button
+            className="button button-secondary w-full"
+            onClick={handleWithdraw}
+            disabled={isWritePending}
+          >
+            {isWritePending ? '提现中...' : '提取合约余额'}
+          </button>
+        </div>
+      </div>
+
       {/* 管理说明 */}
       <div className="card">
         <h3>管理说明</h3>
@@ -305,6 +282,8 @@ const AdminPanel: React.FC = () => {
           <li>• 可以随时提取合约中的ETH余额</li>
         </ul>
       </div>
+
+
 
     </div>
   )
