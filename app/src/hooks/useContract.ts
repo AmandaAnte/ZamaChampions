@@ -1,60 +1,67 @@
 import { useReadContract, useWriteContract, useWatchContractEvent } from 'wagmi'
 import { FOOTBALL_BETTING_ABI } from '../utils/contract'
 import { CONTRACT_ADDRESS } from '../utils/config'
-import { Match, MatchBets, UserBet } from '../types/contract'
 
 export function useFootballBettingContract() {
   const { writeContract, isPending: isWritePending } = useWriteContract()
 
   // Read functions
   const useOwner = () => useReadContract({
-    address: CONTRACT_ADDRESS,
+    address: CONTRACT_ADDRESS as `0x${string}`,
     abi: FOOTBALL_BETTING_ABI,
     functionName: 'owner',
   })
 
   const useMatchCounter = () => useReadContract({
-    address: CONTRACT_ADDRESS,
+    address: CONTRACT_ADDRESS as `0x${string}`,
     abi: FOOTBALL_BETTING_ABI,
     functionName: 'matchCounter',
   })
 
   const useGetMatch = (matchId: bigint) => useReadContract({
-    address: CONTRACT_ADDRESS,
+    address: CONTRACT_ADDRESS as `0x${string}`,
     abi: FOOTBALL_BETTING_ABI,
     functionName: 'getMatch',
     args: [matchId],
-    enabled: !!matchId,
+    query: {
+      enabled: !!matchId,
+    },
   })
 
   const useGetMatchBets = (matchId: bigint) => useReadContract({
-    address: CONTRACT_ADDRESS,
+    address: CONTRACT_ADDRESS as `0x${string}`,
     abi: FOOTBALL_BETTING_ABI,
     functionName: 'getMatchBets',
     args: [matchId],
-    enabled: !!matchId,
+    query: {
+      enabled: !!matchId,
+    },
   })
 
   const useGetUserPoints = (userAddress: `0x${string}`) => useReadContract({
-    address: CONTRACT_ADDRESS,
+    address: CONTRACT_ADDRESS as `0x${string}`,
     abi: FOOTBALL_BETTING_ABI,
     functionName: 'getUserPoints',
     args: [userAddress],
-    enabled: !!userAddress,
+    query: {
+      enabled: !!userAddress,
+    },
   })
 
   const useGetUserBet = (matchId: bigint, userAddress: `0x${string}`) => useReadContract({
-    address: CONTRACT_ADDRESS,
+    address: CONTRACT_ADDRESS as `0x${string}`,
     abi: FOOTBALL_BETTING_ABI,
     functionName: 'getUserBet',
     args: [matchId, userAddress],
-    enabled: !!(matchId && userAddress),
+    query: {
+      enabled: !!(matchId && userAddress),
+    },
   })
 
   // Write functions
   const buyPoints = (value: bigint) => {
     return writeContract({
-      address: CONTRACT_ADDRESS,
+      address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       functionName: 'buyPoints',
       value,
@@ -70,7 +77,7 @@ export function useFootballBettingContract() {
     matchTime: bigint
   ) => {
     return writeContract({
-      address: CONTRACT_ADDRESS,
+      address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       functionName: 'createMatch',
       args: [homeTeam, awayTeam, matchName, bettingStartTime, bettingEndTime, matchTime],
@@ -84,7 +91,7 @@ export function useFootballBettingContract() {
     inputProof: `0x${string}`
   ) => {
     return writeContract({
-      address: CONTRACT_ADDRESS,
+      address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       functionName: 'placeBet',
       args: [matchId, encryptedBetDirection, encryptedBetCount, inputProof],
@@ -93,7 +100,7 @@ export function useFootballBettingContract() {
 
   const finishMatch = (matchId: bigint, result: number) => {
     return writeContract({
-      address: CONTRACT_ADDRESS,
+      address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       functionName: 'finishMatch',
       args: [matchId, result],
@@ -102,7 +109,7 @@ export function useFootballBettingContract() {
 
   const settleBet = (matchId: bigint) => {
     return writeContract({
-      address: CONTRACT_ADDRESS,
+      address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       functionName: 'settleBet',
       args: [matchId],
@@ -111,7 +118,7 @@ export function useFootballBettingContract() {
 
   const withdraw = () => {
     return writeContract({
-      address: CONTRACT_ADDRESS,
+      address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       functionName: 'withdraw',
     })
@@ -120,7 +127,7 @@ export function useFootballBettingContract() {
   // Event watchers
   const useWatchMatchCreated = (onLogs: (logs: any[]) => void) => {
     return useWatchContractEvent({
-      address: CONTRACT_ADDRESS,
+      address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       eventName: 'MatchCreated',
       onLogs,
@@ -129,7 +136,7 @@ export function useFootballBettingContract() {
 
   const useWatchBetPlaced = (onLogs: (logs: any[]) => void) => {
     return useWatchContractEvent({
-      address: CONTRACT_ADDRESS,
+      address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       eventName: 'BetPlaced',
       onLogs,
@@ -138,7 +145,7 @@ export function useFootballBettingContract() {
 
   const useWatchMatchFinished = (onLogs: (logs: any[]) => void) => {
     return useWatchContractEvent({
-      address: CONTRACT_ADDRESS,
+      address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       eventName: 'MatchFinished',
       onLogs,
@@ -147,7 +154,7 @@ export function useFootballBettingContract() {
 
   const useWatchBetSettled = (onLogs: (logs: any[]) => void) => {
     return useWatchContractEvent({
-      address: CONTRACT_ADDRESS,
+      address: CONTRACT_ADDRESS as `0x${string}`,
       abi: FOOTBALL_BETTING_ABI,
       eventName: 'BetSettled',
       onLogs,

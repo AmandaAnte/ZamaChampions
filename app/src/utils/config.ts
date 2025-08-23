@@ -1,4 +1,4 @@
-import { http, createConfig } from 'wagmi'
+import { http } from 'wagmi'
 import { sepolia } from 'wagmi/chains'
 import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 
@@ -12,7 +12,7 @@ export const config = getDefaultConfig({
 })
 
 // Contract addresses - update these after deployment
-export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '0x0000000000000000000000000000000000000000' as const
+export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '0x9a2844DC1693e019B9Fc66697D5B16A6e8f204fA' as const
 
 // Zama FHE configuration for Sepolia
 export const FHEVM_CONFIG = {

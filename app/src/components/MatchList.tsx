@@ -10,9 +10,6 @@ const MatchList: React.FC = () => {
   const { data: walletClient } = useWalletClient()
   const {
     useMatchCounter,
-    useGetMatch,
-    useGetMatchBets,
-    useGetUserBet,
     placeBet,
     settleBet,
     isWritePending
@@ -30,21 +27,12 @@ const MatchList: React.FC = () => {
   useEffect(() => {
     if (!matchCounter) return
 
-    const fetchMatches = async () => {
-      const matchesData = []
-      for (let i = 1; i <= Number(matchCounter); i++) {
-        try {
-          // 这里需要直接调用合约方法，因为useGetMatch是hook不能在循环中使用
-          // 实际使用时可能需要调整这个逻辑
-          matchesData.push({ id: BigInt(i) })
-        } catch (error) {
-          console.error(`获取比赛 ${i} 数据失败:`, error)
-        }
-      }
-      setMatches(matchesData)
+    // 生成比赛ID列表
+    const matchIds = []
+    for (let i = 1; i <= Number(matchCounter); i++) {
+      matchIds.push(BigInt(i))
     }
-
-    fetchMatches()
+    setMatches(matchIds.map(id => ({ id })))
   }, [matchCounter])
 
   const handlePlaceBet = async (matchId: bigint) => {
@@ -70,7 +58,7 @@ const MatchList: React.FC = () => {
         Number(betCount)
       )
 
-      await placeBet(
+      placeBet(
         matchId,
         encryptedData.handles[0], // betDirection
         encryptedData.handles[1], // betCount
@@ -91,56 +79,13 @@ const MatchList: React.FC = () => {
       setError('')
       setSuccess('')
 
-      await settleBet(matchId)
+      settleBet(matchId)
 
       setSuccess('结算请求已提交，请等待解密完成')
     } catch (err: any) {
       console.error('结算失败:', err)
       setError(err.message || '结算失败')
     }
-  }
-
-  const getMatchStatus = (match: any) => {
-    const now = Math.floor(Date.now() / 1000)
-    if (match.isFinished) return 'finished'
-    if (now >= Number(match.bettingStartTime) && now <= Number(match.bettingEndTime)) return 'betting'
-    if (now < Number(match.bettingStartTime)) return 'upcoming'
-    return 'closed'
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'betting': return '押注中'
-      case 'upcoming': return '即将开始'
-      case 'closed': return '押注结束'
-      case 'finished': return '已结束'
-      default: return '未知'
-    }
-  }
-
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'betting': return 'status-betting'
-      case 'upcoming': return 'status-active'
-      case 'closed': return 'status-finished'
-      case 'finished': return 'status-finished'
-      default: return 'status-finished'
-    }
-  }
-
-  const getResultText = (result: number) => {
-    switch (result) {
-      case 1: return '主队获胜'
-      case 2: return '客队获胜'
-      case 3: return '平局'
-      default: return '待定'
-    }
-  }
-
-  const formatTime = (timestamp: bigint) => {
-    return formatDistanceToNow(new Date(Number(timestamp) * 1000), {
-      addSuffix: true,
-    })
   }
 
   if (!matchCounter || Number(matchCounter) === 0) {
@@ -215,10 +160,7 @@ const MatchCard: React.FC<{
 
   if (!match) return <div className="card">加载中...</div>
 
-  const status = getMatchStatus(match)
-  const canBet = status === 'betting' && address && !userBet?.betDirection
-  const canSettle = match.isFinished && userBet?.betDirection && !userBet?.hasSettled && matchBets?.isTotalDecrypted
-
+  // Helper functions
   const getMatchStatus = (match: any) => {
     const now = Math.floor(Date.now() / 1000)
     if (match.isFinished) return 'finished'
@@ -262,6 +204,11 @@ const MatchCard: React.FC<{
     })
   }
 
+  const status = getMatchStatus(match)
+  const hasBet = Boolean(userBet?.betDirection && userBet.betDirection !== 0n)
+  const canBet = Boolean(status === 'betting' && address && !hasBet)
+  const canSettle = Boolean(match.isFinished && hasBet && !userBet?.hasSettled && matchBets?.isTotalDecrypted)
+
   return (
     <div className="match-card card">
       <div className="flex justify-between items-start mb-4">
@@ -288,28 +235,28 @@ const MatchCard: React.FC<{
       </div>
 
       {/* 显示押注统计（如果已解密） */}
-      {matchBets?.isTotalDecrypted && (
+      {Boolean(matchBets?.isTotalDecrypted) && (
         <div className="grid grid-3 gap-2 mb-4 text-sm">
           <div className="text-center">
             <div className="font-bold">主队获胜</div>
-            <div>{matchBets.decryptedHomeWinTotal} 注</div>
+            <div>{Number(matchBets?.decryptedHomeWinTotal || 0)} 注</div>
           </div>
           <div className="text-center">
             <div className="font-bold">客队获胜</div>
-            <div>{matchBets.decryptedAwayWinTotal} 注</div>
+            <div>{Number(matchBets?.decryptedAwayWinTotal || 0)} 注</div>
           </div>
           <div className="text-center">
             <div className="font-bold">平局</div>
-            <div>{matchBets.decryptedDrawTotal} 注</div>
+            <div>{Number(matchBets?.decryptedDrawTotal || 0)} 注</div>
           </div>
         </div>
       )}
 
       {/* 用户押注状态 */}
-      {userBet?.betDirection && (
+      {hasBet && (
         <div className="text-sm text-green mb-4">
           <p>✓ 您已押注此比赛</p>
-          {userBet.hasSettled && <p>✓ 已结算</p>}
+          {userBet?.hasSettled && <p>✓ 已结算</p>}
         </div>
       )}
 
@@ -396,7 +343,7 @@ const MatchCard: React.FC<{
       )}
 
       {/* 状态提示 */}
-      {!canBet && !canSettle && status === 'betting' && userBet?.betDirection && (
+      {!canBet && !canSettle && status === 'betting' && hasBet && (
         <div className="text-center text-gray">
           您已押注此比赛，请等待比赛结束
         </div>

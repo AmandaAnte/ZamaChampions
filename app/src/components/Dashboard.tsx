@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useAccount, useWalletClient } from 'wagmi'
-import { parseEther, formatEther } from 'viem'
+import { parseEther } from 'viem'
 import { useFootballBettingContract } from '../hooks/useContract'
 import { decryptUserPoints, CONTRACT_ADDRESS } from '../utils/fhe'
 import { ETH_TO_POINTS_RATE } from '../types/contract'

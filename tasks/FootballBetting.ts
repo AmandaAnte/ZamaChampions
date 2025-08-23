@@ -51,13 +51,14 @@ task("football:create-match", "Create a new football match")
   // .addParam("endtime", "Betting end time (unix timestamp)")
   // .addParam("matchtime", "Match time (unix timestamp)")
   .setAction(async function (taskArguments: any, hre: HardhatRuntimeEnvironment) {
-    const { ethers, deployments } = hre;
+    const { ethers, deployments,fhevm } = hre;
     const signers = await ethers.getSigners();
     const signer = signers[0];
+    await fhevm.initializeCLIApi()
 
-    const starttime = Math.floor(Date.now() / 1000) + 4;
-    const endtime = Math.floor(Date.now() / 1000) + 60;
-    const matchtime = Math.floor(Date.now() / 1000) + 60;
+    const starttime = Math.floor(Date.now() / 1000) + 300; // 5 minutes from now
+    const endtime = Math.floor(Date.now() / 1000) + 1800; // 30 minutes from now
+    const matchtime = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
 
     const deployment = await deployments.get("FootballBetting");
     const contractFactory = await ethers.getContractFactory("FootballBetting");
