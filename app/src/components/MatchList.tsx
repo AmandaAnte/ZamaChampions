@@ -205,7 +205,7 @@ const MatchCard: React.FC<{
   }
 
   const status = getMatchStatus(match)
-  const hasBet = Boolean(userBet?.betDirection && userBet.betDirection !== 0n)
+  const hasBet = Boolean(userBet?.betDirection && userBet.betDirection !== '0x0000000000000000000000000000000000000000000000000000000000000000')
   const canBet = Boolean(status === 'betting' && address && !hasBet)
   const canSettle = Boolean(match.isFinished && hasBet && !userBet?.hasSettled && matchBets?.isTotalDecrypted)
 

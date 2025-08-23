@@ -86,8 +86,8 @@ export function useFootballBettingContract() {
 
   const placeBet = (
     matchId: bigint,
-    encryptedBetDirection: bigint,
-    encryptedBetCount: bigint,
+    encryptedBetDirection: `0x${string}`,
+    encryptedBetCount: `0x${string}`,
     inputProof: `0x${string}`
   ) => {
     return writeContract({

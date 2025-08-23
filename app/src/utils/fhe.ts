@@ -5,15 +5,15 @@ let fhevmInstance: any = null
 
 export async function initFHEVM() {
   if (fhevmInstance) return fhevmInstance
-  
+
   try {
     await initSDK()
-    
+
     const config = {
       ...SepoliaConfig,
       network: (window as any).ethereum
     }
-    
+
     fhevmInstance = await createInstance(config)
     return fhevmInstance
   } catch (error) {
@@ -31,17 +31,17 @@ export function getFHEVMInstance() {
 
 export async function encryptBetData(contractAddress: string, userAddress: string, betDirection: number, betCount: number) {
   const instance = getFHEVMInstance()
-  
+
   const buffer = instance.createEncryptedInput(contractAddress, userAddress)
   buffer.add8(BigInt(betDirection))
   buffer.add32(BigInt(betCount))
-  
+
   return await buffer.encrypt()
 }
 
-export async function decryptUserPoints(ciphertextHandle: string, contractAddress: string, userAddress: string, signer: any) {
+export async function decryptUserPoints(ciphertextHandle: string, contractAddress: string, userAddress: string, walletClient: any) {
   const instance = getFHEVMInstance()
-  
+
   const keypair = instance.generateKeypair()
   const handleContractPairs = [
     {
@@ -49,21 +49,22 @@ export async function decryptUserPoints(ciphertextHandle: string, contractAddres
       contractAddress: contractAddress,
     },
   ]
-  
+
   const startTimeStamp = Math.floor(Date.now() / 1000).toString()
   const durationDays = "10"
   const contractAddresses = [contractAddress]
-  
+
   const eip712 = instance.createEIP712(keypair.publicKey, contractAddresses, startTimeStamp, durationDays)
-  
-  const signature = await signer.signTypedData(
-    eip712.domain,
-    {
+  const signature = await walletClient.signTypedData({
+    account: walletClient.account,
+    domain: eip712.domain,
+    types: {
       UserDecryptRequestVerification: eip712.types.UserDecryptRequestVerification,
     },
-    eip712.message,
-  )
-  
+    primaryType: 'UserDecryptRequestVerification',
+    message: eip712.message
+  });
+
   const result = await instance.userDecrypt(
     handleContractPairs,
     keypair.privateKey,
@@ -74,6 +75,6 @@ export async function decryptUserPoints(ciphertextHandle: string, contractAddres
     startTimeStamp,
     durationDays,
   )
-  
+
   return result[ciphertextHandle]
 }

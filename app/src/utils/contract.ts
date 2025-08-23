@@ -1,8 +1,29 @@
-export const FOOTBALL_BETTING_ABI = [
+export const FOOTBALL_BETTING_ABI = 
+[
   {
     "inputs": [],
     "stateMutability": "nonpayable",
     "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "HandlesAlreadySavedForRequestID",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidKMSSignatures",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NoHandleFoundForRequestID",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "UnsupportedHandleType",
+    "type": "error"
   },
   {
     "anonymous": false,
@@ -46,6 +67,19 @@ export const FOOTBALL_BETTING_ABI = [
       }
     ],
     "name": "BetSettled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "requestID",
+        "type": "uint256"
+      }
+    ],
+    "name": "DecryptionFulfilled",
     "type": "event"
   },
   {
@@ -438,22 +472,22 @@ export const FOOTBALL_BETTING_ABI = [
           {
             "internalType": "euint32",
             "name": "homeWinTotal",
-            "type": "uint256"
+            "type": "bytes32"
           },
           {
             "internalType": "euint32",
             "name": "awayWinTotal",
-            "type": "uint256"
+            "type": "bytes32"
           },
           {
             "internalType": "euint32",
             "name": "drawTotal",
-            "type": "uint256"
+            "type": "bytes32"
           },
           {
             "internalType": "euint32",
             "name": "totalBetAmount",
-            "type": "uint256"
+            "type": "bytes32"
           },
           {
             "internalType": "bool",
@@ -509,12 +543,12 @@ export const FOOTBALL_BETTING_ABI = [
           {
             "internalType": "euint8",
             "name": "betDirection",
-            "type": "uint256"
+            "type": "bytes32"
           },
           {
             "internalType": "euint32",
             "name": "betAmount",
-            "type": "uint256"
+            "type": "bytes32"
           },
           {
             "internalType": "bool",
@@ -548,20 +582,7 @@ export const FOOTBALL_BETTING_ABI = [
       {
         "internalType": "euint32",
         "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "matchCounter",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
+        "type": "bytes32"
       }
     ],
     "stateMutability": "view",
@@ -580,22 +601,22 @@ export const FOOTBALL_BETTING_ABI = [
       {
         "internalType": "euint32",
         "name": "homeWinTotal",
-        "type": "uint256"
+        "type": "bytes32"
       },
       {
         "internalType": "euint32",
         "name": "awayWinTotal",
-        "type": "uint256"
+        "type": "bytes32"
       },
       {
         "internalType": "euint32",
         "name": "drawTotal",
-        "type": "uint256"
+        "type": "bytes32"
       },
       {
         "internalType": "euint32",
         "name": "totalBetAmount",
-        "type": "uint256"
+        "type": "bytes32"
       },
       {
         "internalType": "bool",
@@ -621,6 +642,19 @@ export const FOOTBALL_BETTING_ABI = [
         "internalType": "uint32",
         "name": "decryptedTotalBetAmount",
         "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "matchCounter",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -718,12 +752,12 @@ export const FOOTBALL_BETTING_ABI = [
       {
         "internalType": "externalEuint8",
         "name": "encryptedBetDirection",
-        "type": "uint256"
+        "type": "bytes32"
       },
       {
         "internalType": "externalEuint32",
         "name": "encryptedBetCount",
-        "type": "uint256"
+        "type": "bytes32"
       },
       {
         "internalType": "bytes",
@@ -767,12 +801,12 @@ export const FOOTBALL_BETTING_ABI = [
       {
         "internalType": "euint8",
         "name": "betDirection",
-        "type": "uint256"
+        "type": "bytes32"
       },
       {
         "internalType": "euint32",
         "name": "betAmount",
-        "type": "uint256"
+        "type": "bytes32"
       },
       {
         "internalType": "bool",

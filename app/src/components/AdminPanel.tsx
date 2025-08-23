@@ -49,7 +49,7 @@ const AdminPanel: React.FC = () => {
       setError('')
       setSuccess('')
       
-      await createMatch(
+      createMatch(
         homeTeam,
         awayTeam,
         matchName,
@@ -87,7 +87,7 @@ const AdminPanel: React.FC = () => {
       setError('')
       setSuccess('')
       
-      await finishMatch(BigInt(matchId), Number(result))
+      finishMatch(BigInt(matchId), Number(result))
       
       setSuccess('比赛结果已提交！')
       setFinishMatchData({ matchId: '', result: '1' })
@@ -102,7 +102,7 @@ const AdminPanel: React.FC = () => {
       setError('')
       setSuccess('')
       
-      await withdraw()
+      withdraw()
       
       setSuccess('提现成功！')
     } catch (err: any) {
@@ -134,15 +134,19 @@ const AdminPanel: React.FC = () => {
   const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
 
   const formatDateTime = (date: Date) => {
-    return date.toISOString().slice(0, 16)
+    // 使用本地时间而不是UTC时间
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`
   }
 
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">管理面板</h1>
-      
-      {error && <div className="error">{error}</div>}
-      {success && <div className="success">{success}</div>}
       
       <div className="grid grid-2">
         {/* 创建比赛 */}
@@ -194,7 +198,7 @@ const AdminPanel: React.FC = () => {
                 type="datetime-local"
                 name="bettingStartTime"
                 className="input"
-                value={formData.bettingStartTime || formatDateTime(oneHourLater)}
+                value={formData.bettingStartTime}
                 onChange={handleInputChange}
                 required
               />
@@ -206,7 +210,7 @@ const AdminPanel: React.FC = () => {
                 type="datetime-local"
                 name="bettingEndTime"
                 className="input"
-                value={formData.bettingEndTime || formatDateTime(twoHoursLater)}
+                value={formData.bettingEndTime }
                 onChange={handleInputChange}
                 required
               />
@@ -218,7 +222,7 @@ const AdminPanel: React.FC = () => {
                 type="datetime-local"
                 name="matchTime"
                 className="input"
-                value={formData.matchTime || formatDateTime(threeDaysLater)}
+                value={formData.matchTime}
                 onChange={handleInputChange}
                 required
               />
@@ -287,6 +291,9 @@ const AdminPanel: React.FC = () => {
         </div>
       </div>
 
+      {/* 状态消息 - 放在页面底部 */}
+      {error && <div className="error mt-4">{error}</div>}
+      {success && <div className="success mt-4">{success}</div>}
       {/* 管理说明 */}
       <div className="card">
         <h3>管理说明</h3>
@@ -298,6 +305,7 @@ const AdminPanel: React.FC = () => {
           <li>• 可以随时提取合约中的ETH余额</li>
         </ul>
       </div>
+
     </div>
   )
 }
