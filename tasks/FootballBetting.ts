@@ -1,6 +1,5 @@
 import { task } from "hardhat/config";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
-import { fhevm } from "hardhat";
 import { toHex } from "viem";
 
 task("football:deploy", "Deploy FootballBetting contract").setAction(
@@ -85,6 +84,7 @@ task("football:place-bet", "Place a bet on a match")
   .addParam("amount", "Number of bets to place")
   .setAction(async function (taskArguments: any, hre: HardhatRuntimeEnvironment) {
     const { ethers } = hre;
+    const { fhevm } = hre; // 在运行时获取fhevm
     const signers = await ethers.getSigners();
     const signer = signers[0];
 

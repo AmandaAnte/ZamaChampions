@@ -172,14 +172,14 @@ contract FootballBetting is SepoliaConfig {
         bytes calldata inputProof
     ) external validMatch(matchId) bettingOpen(matchId) {
         // 验证并转换外部加密输入
-        euint8 betDirection = FHE.asEuint8(encryptedBetDirection, inputProof);
-        euint32 betCount = FHE.asEuint32(encryptedBetCount, inputProof);
+        euint8 betDirection = FHE.fromExternal(encryptedBetDirection, inputProof);
+        euint32 betCount = FHE.fromExternal(encryptedBetCount, inputProof);
         
         // 检查用户是否已经在此比赛中押注
         require(!FHE.isInitialized(userBets[matchId][msg.sender].betDirection), "Already bet on this match");
         
         // 计算总押注金额
-        euint32 totalBetAmount = FHE.mul(betCount, BET_UNIT);
+        euint32 totalBetAmount = FHE.mul(betCount, uint32(BET_UNIT));
         
         // 检查用户积分是否足够
         euint32 currentPoints = userPoints[msg.sender];
