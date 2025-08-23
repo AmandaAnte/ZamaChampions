@@ -242,12 +242,12 @@ contract FootballBetting is SepoliaConfig {
 
         matches[matchId].result = result;
         matches[matchId].isFinished = true;
-
+        requestDecryptMatchTotals(matchId);
         emit MatchFinished(matchId, result);
     }
 
     // 请求解密比赛押注统计
-    function requestDecryptMatchTotals(uint256 matchId) external onlyOwner validMatch(matchId) {
+    function requestDecryptMatchTotals(uint256 matchId) internal validMatch(matchId) {
         require(matches[matchId].isFinished, "Match not finished yet");
         require(!matchBets[matchId].isTotalDecrypted, "Already decrypted");
 
