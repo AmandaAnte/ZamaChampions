@@ -296,17 +296,23 @@ const MatchCard: React.FC<{
           )}
         </div>
 
-        {/* 显示押注统计（如果已解密） */}
-        {Boolean(matchBets?.isTotalDecrypted) && (
-          <div className="mb-4">
-            <p className="text-sm font-bold mb-2">押注统计:</p>
+        {/* 显示押注统计 */}
+        <div className="mb-4">
+          <p className="text-sm font-bold mb-2">押注统计:</p>
+          {Boolean(matchBets?.isTotalDecrypted) ? (
             <div className="flex justify-between text-sm">
               <span>主队获胜: <strong>{Number(matchBets?.decryptedHomeWinTotal || 0)}注</strong></span>
               <span>客队获胜: <strong>{Number(matchBets?.decryptedAwayWinTotal || 0)}注</strong></span>
               <span>平局: <strong>{Number(matchBets?.decryptedDrawTotal || 0)}注</strong></span>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="flex justify-between text-sm">
+              <span>主队获胜: <strong>***</strong></span>
+              <span>客队获胜: <strong>***</strong></span>
+              <span>平局: <strong>***</strong></span>
+            </div>
+          )}
+        </div>
 
         {/* 用户押注状态 */}
         {hasBet && (
