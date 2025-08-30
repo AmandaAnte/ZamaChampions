@@ -253,24 +253,6 @@ body {
   background-color: rgba(107, 114, 128, 0.15);
   color: #d1d5db;
   border: 1px solid #6b7280;
-  position: relative;
-}
-
-.status-finished::after {
-  content: '✓';
-  position: absolute;
-  right: -8px;
-  top: -8px;
-  width: 16px;
-  height: 16px;
-  background-color: #10b981;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 8px;
-  color: white;
-  font-weight: bold;
 }
 
 .status-betting {
@@ -471,9 +453,9 @@ body {
 .match-teams {
   background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
   border: 1px solid #475569;
-  border-radius: 0.75rem;
-  padding: 1rem;
-  margin: 1rem 0;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin: 0.75rem 0;
   position: relative;
 }
 
@@ -491,7 +473,7 @@ body {
 .team-name {
   color: #e2e8f0;
   font-weight: 700;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
 }
 
 .vs-divider {
@@ -504,21 +486,21 @@ body {
 .info-section {
   background-color: #0f172a;
   border: 1px solid #334155;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
-  margin-bottom: 0.75rem;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .info-title {
   color: #10b981;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.375rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
 }
 
 .info-title::before {
@@ -531,8 +513,8 @@ body {
 
 .time-item {
   color: #cbd5e1;
-  font-size: 0.875rem;
-  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  margin-bottom: 0.125rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -552,23 +534,23 @@ body {
 .betting-stats {
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   border: 1px solid #334155;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
-  margin-bottom: 0.75rem;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-  margin-top: 0.5rem;
+  gap: 0.5rem;
+  margin-top: 0.375rem;
 }
 
 .stat-item {
   text-align: center;
-  padding: 0.5rem;
+  padding: 0.375rem;
   background-color: #1e293b;
-  border-radius: 0.375rem;
+  border-radius: 0.25rem;
   border: 1px solid #374151;
   transition: all 0.2s ease;
 }
@@ -580,25 +562,25 @@ body {
 
 .stat-label {
   color: #94a3b8;
-  font-size: 0.75rem;
+  font-size: 0.6rem;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.125rem;
 }
 
 .stat-value {
   color: #f1f5f9;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.875rem;
 }
 
 .user-bet-indicator {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.2) 100%);
   border: 1px solid #10b981;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
-  margin-bottom: 0.75rem;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
   position: relative;
 }
 
@@ -615,40 +597,31 @@ body {
 .bet-success-text {
   color: #6ee7b7;
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.125rem;
 }
 
 .settled-text {
   color: #34d399;
   font-weight: 500;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
 }
 
 .result-announcement {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.3) 100%);
   border: 2px solid #10b981;
-  border-radius: 0.75rem;
-  padding: 1rem;
-  margin-bottom: 0.75rem;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
   text-align: center;
   position: relative;
 }
 
-.result-announcement::before {
-  content: '🏆';
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #1e293b;
-  padding: 0 0.5rem;
-  font-size: 1.25rem;
-}
 
 .result-text {
   color: #6ee7b7;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }

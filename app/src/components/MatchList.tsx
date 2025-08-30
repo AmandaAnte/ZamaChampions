@@ -253,9 +253,9 @@ const MatchCard: React.FC<{
 
     const getResultText = (result: number) => {
       switch (result) {
-        case 1: return 'Home Win'
-        case 2: return 'Away Win'
-        case 3: return 'Draw'
+        case 1: return '🏆 Home Win'
+        case 2: return '🏆 Away Win'
+        case 3: return '🤝 Draw'
         default: return 'Pending'
       }
     }
@@ -326,7 +326,7 @@ const MatchCard: React.FC<{
             <div className="stat-item">
               <div className="stat-label">Home Win</div>
               <div className="stat-value">
-                {Boolean(matchBets?.isTotalDecrypted) 
+                {Boolean(matchBets?.isTotalDecrypted)
                   ? Number(matchBets?.decryptedHomeWinTotal || 0)
                   : '***'
                 }
@@ -335,7 +335,7 @@ const MatchCard: React.FC<{
             <div className="stat-item">
               <div className="stat-label">Draw</div>
               <div className="stat-value">
-                {Boolean(matchBets?.isTotalDecrypted) 
+                {Boolean(matchBets?.isTotalDecrypted)
                   ? Number(matchBets?.decryptedDrawTotal || 0)
                   : '***'
                 }
@@ -344,7 +344,7 @@ const MatchCard: React.FC<{
             <div className="stat-item">
               <div className="stat-label">Away Win</div>
               <div className="stat-value">
-                {Boolean(matchBets?.isTotalDecrypted) 
+                {Boolean(matchBets?.isTotalDecrypted)
                   ? Number(matchBets?.decryptedAwayWinTotal || 0)
                   : '***'
                 }
@@ -363,10 +363,10 @@ const MatchCard: React.FC<{
 
         {/* Betting interface */}
         <div>
-          <p className="text-xs text-gray mb-2">
+          {/* <p className="text-xs text-gray mb-2">
             Debug: canBet={canBet.toString()}, status={status}, hasAddress={!!address}, hasBet={hasBet},
             selected={selectedMatch?.toString()}, matchId={matchId.toString()}
-          </p>
+          </p> */}
           {canBet ? (
             <button
               className="button w-full"
