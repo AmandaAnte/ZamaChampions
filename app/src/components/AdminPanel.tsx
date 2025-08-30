@@ -4,13 +4,20 @@ import { useFootballBettingContract } from '../hooks/useContract'
 const AdminPanel: React.FC = () => {
   const { createMatch, finishMatch, withdraw, isWritePending } = useFootballBettingContract()
   
+  // Helper function to format datetime for input
+  const getDefaultDateTime = (minutesFromNow: number) => {
+    const date = new Date()
+    date.setMinutes(date.getMinutes() + minutesFromNow)
+    return date.toISOString().slice(0, 16) // Format: YYYY-MM-DDTHH:mm
+  }
+  
   const [formData, setFormData] = useState({
     homeTeam: 'Real Madrid',
     awayTeam: 'Barcelona',
     matchName: 'El Clásico',
-    bettingStartTime: '',
-    bettingEndTime: '',
-    matchTime: '',
+    bettingStartTime: getDefaultDateTime(5),   // 5 minutes from now
+    bettingEndTime: getDefaultDateTime(30),   // 30 minutes from now  
+    matchTime: getDefaultDateTime(60),        // 1 hour from now
   })
   
   const [finishMatchData, setFinishMatchData] = useState({
