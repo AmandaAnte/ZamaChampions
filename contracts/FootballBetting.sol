@@ -55,8 +55,15 @@ contract FootballBetting is SepoliaConfig {
     // Match counter
     uint256 public matchCounter;
 
-    // Mapping from decryption request ID to match ID
+    // Mapping from decryption request ID to match ID (for match totals decryption)
     mapping(uint256 requestId => uint256 matchId) private decryptionRequestToMatch;
+    
+    // Mapping from decryption request ID to user bet info (for user bet decryption)
+    struct UserBetRequest {
+        address user;
+        uint256 matchId;
+    }
+    mapping(uint256 requestId => UserBetRequest) private userBetDecryptionRequests;
 
     // Constants
     uint256 public constant BET_UNIT = 100; // 100 points per bet
@@ -324,7 +331,13 @@ contract FootballBetting is SepoliaConfig {
         cts[0] = FHE.toBytes32(userBet.betDirection);
         cts[1] = FHE.toBytes32(userBet.betAmount);
 
-        FHE.requestDecryption(cts, this.decryptUserBetCallback.selector);
+        uint256 requestId = FHE.requestDecryption(cts, this.decryptUserBetCallback.selector);
+        
+        // Store requestId to user and matchId mapping
+        userBetDecryptionRequests[requestId] = UserBetRequest({
+            user: msg.sender,
+            matchId: matchId
+        });
 
         emit UserDecryptionRequested(matchId, msg.sender);
     }
@@ -338,64 +351,68 @@ contract FootballBetting is SepoliaConfig {
     ) public {
         FHE.checkSignatures(requestId, signatures);
 
-        // Simplified implementation: iterate to find corresponding user and match
-        // Should store requestId to user and matchId mapping in production
-        for (uint256 matchId = 1; matchId <= matchCounter; matchId++) {
-            if (matches[matchId].isFinished && matchBets[matchId].isTotalDecrypted) {
-                for (uint256 i = 0; i < 10; i++) {
-                    // Simplified implementation, should have better method in production
-                    address user = address(uint160(i)); // Need actual user address mapping here
-                    UserBet storage userBet = userBets[matchId][user];
+        // Get user and match info from mapping
+        UserBetRequest memory request = userBetDecryptionRequests[requestId];
+        require(request.user != address(0), "Invalid request ID");
+        
+        address user = request.user;
+        uint256 matchId = request.matchId;
+        
+        require(matches[matchId].isFinished, "Match not finished");
+        require(matchBets[matchId].isTotalDecrypted, "Match totals not decrypted yet");
+        
+        UserBet storage userBet = userBets[matchId][user];
+        require(FHE.isInitialized(userBet.betDirection), "No bet found");
+        require(!userBet.hasSettled, "Already settled");
+        require(!userBet.isDecrypted, "Already decrypted");
+        
+        // Check if won
+        uint8 matchResult = matches[matchId].result;
+        if (betDirection == matchResult) {
+            // Calculate reward
+            uint32 winningPool;
+            uint32 totalWinners;
 
-                    if (FHE.isInitialized(userBet.betDirection) && !userBet.hasSettled && !userBet.isDecrypted) {
-                        // Check if won
-                        uint8 matchResult = matches[matchId].result;
-                        if (betDirection == matchResult) {
-                            // Calculate reward
-                            uint32 winningPool;
-                            uint32 totalWinners;
+            if (matchResult == 1) {
+                // Home win
+                winningPool = matchBets[matchId].decryptedTotalBetAmount;
+                totalWinners = matchBets[matchId].decryptedHomeWinTotal;
+            } else if (matchResult == 2) {
+                // Away win
+                winningPool = matchBets[matchId].decryptedTotalBetAmount;
+                totalWinners = matchBets[matchId].decryptedAwayWinTotal;
+            } else {
+                // Draw
+                winningPool = matchBets[matchId].decryptedTotalBetAmount;
+                totalWinners = matchBets[matchId].decryptedDrawTotal;
+            }
 
-                            if (matchResult == 1) {
-                                // Home win
-                                winningPool = matchBets[matchId].decryptedTotalBetAmount;
-                                totalWinners = matchBets[matchId].decryptedHomeWinTotal;
-                            } else if (matchResult == 2) {
-                                // Away win
-                                winningPool = matchBets[matchId].decryptedTotalBetAmount;
-                                totalWinners = matchBets[matchId].decryptedAwayWinTotal;
-                            } else {
-                                // Draw
-                                winningPool = matchBets[matchId].decryptedTotalBetAmount;
-                                totalWinners = matchBets[matchId].decryptedDrawTotal;
-                            }
+            if (totalWinners > 0) {
+                uint32 userWinAmount = (winningPool * betAmount) / totalWinners;
 
-                            if (totalWinners > 0) {
-                                uint32 userWinAmount = (winningPool * betAmount) / totalWinners;
-
-                                // Add user points
-                                euint32 currentPoints = userPoints[user];
-                                if (!FHE.isInitialized(currentPoints)) {
-                                    currentPoints = FHE.asEuint32(0);
-                                }
-
-                                euint32 newPoints = FHE.add(currentPoints, userWinAmount);
-                                userPoints[user] = newPoints;
-
-                                // Set ACL permissions
-                                FHE.allowThis(userPoints[user]);
-                                FHE.allow(userPoints[user], user);
-
-                                emit BetSettled(matchId, user, userWinAmount);
-                            }
-                        }
-
-                        userBet.hasSettled = true;
-                        userBet.isDecrypted = true;
-                        break;
-                    }
+                // Add user points
+                euint32 currentPoints = userPoints[user];
+                if (!FHE.isInitialized(currentPoints)) {
+                    currentPoints = FHE.asEuint32(0);
                 }
+
+                euint32 newPoints = FHE.add(currentPoints, userWinAmount);
+                userPoints[user] = newPoints;
+
+                // Set ACL permissions
+                FHE.allowThis(userPoints[user]);
+                FHE.allow(userPoints[user], user);
+
+                emit BetSettled(matchId, user, userWinAmount);
             }
         }
+
+        // Mark as settled and decrypted
+        userBet.hasSettled = true;
+        userBet.isDecrypted = true;
+        
+        // Clean up mapping to save gas
+        delete userBetDecryptionRequests[requestId];
     }
 
     // View user points
