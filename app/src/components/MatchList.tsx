@@ -3,7 +3,7 @@ import { useAccount, useWalletClient } from 'wagmi'
 import { useFootballBettingContract } from '../hooks/useContract'
 import { encryptBetData, CONTRACT_ADDRESS } from '../utils/fhe'
 import { BetDirection, BET_UNIT } from '../types/contract'
-import { formatDistanceToNow } from 'date-fns'
+import { format } from 'date-fns'
 
 const MatchList: React.FC = () => {
   const { address } = useAccount()
@@ -244,8 +244,8 @@ const MatchCard: React.FC<{
     const getStatusClass = (status: string) => {
       switch (status) {
         case 'betting': return 'status-betting'
-        case 'upcoming': return 'status-active'
-        case 'closed': return 'status-finished'
+        case 'upcoming': return 'status-upcoming'
+        case 'closed': return 'status-closed'
         case 'finished': return 'status-finished'
         default: return 'status-finished'
       }
@@ -261,9 +261,7 @@ const MatchCard: React.FC<{
     }
 
     const formatTime = (timestamp: bigint) => {
-      return formatDistanceToNow(new Date(Number(timestamp) * 1000), {
-        addSuffix: true,
-      })
+      return format(new Date(Number(timestamp) * 1000), 'yyyy-MM-dd HH:mm:ss')
     }
 
     const status = getMatchStatus(match)
@@ -273,52 +271,93 @@ const MatchCard: React.FC<{
 
     return (
       <div className="match-card card">
+        {/* Header with title and status */}
         <div className="flex justify-between items-start mb-4">
-          <h3>{match.matchName}</h3>
+          <h3 className="match-title">{match.matchName}</h3>
           <span className={`status-badge ${getStatusClass(status)}`}>
             {getStatusText(status)}
           </span>
         </div>
 
-        <div className="text-center mb-4">
-          <div className="text-2xl font-bold mb-2">
-            {match.homeTeam} vs {match.awayTeam}
+        {/* Teams display */}
+        <div className="match-teams text-center">
+          <div className="team-name">
+            {match.homeTeam}
+            <span className="vs-divider">vs</span>
+            {match.awayTeam}
           </div>
         </div>
 
-        <div className="text-sm text-gray mb-4">
-          <p>Betting Period: {formatTime(match.bettingStartTime)} to {formatTime(match.bettingEndTime)}</p>
-          <p>Match Time: {formatTime(match.matchTime)}</p>
-          {match.isFinished && (
-            <p className="text-green font-bold mt-2">
-              Match Result: {getResultText(match.result)}
-            </p>
-          )}
+        {/* Match result (if finished) */}
+        {match.isFinished && (
+          <div className="result-announcement">
+            <div className="result-text">
+              {getResultText(match.result)}
+            </div>
+          </div>
+        )}
+
+        {/* Betting Period */}
+        <div className="info-section">
+          <div className="info-title">⏰ Betting Period</div>
+          <div className="time-item">
+            <span className="time-label">Start:</span>
+            <span className="time-value">{formatTime(match.bettingStartTime)}</span>
+          </div>
+          <div className="time-item">
+            <span className="time-label">End:</span>
+            <span className="time-value">{formatTime(match.bettingEndTime)}</span>
+          </div>
         </div>
 
-        {/* Show betting statistics */}
-        <div className="mb-4">
-          <p className="text-sm font-bold mb-2">Betting Statistics:</p>
-          {Boolean(matchBets?.isTotalDecrypted) ? (
-            <div className="flex justify-between text-sm">
-              <span>Home Win: <strong>{Number(matchBets?.decryptedHomeWinTotal || 0)} bets</strong></span>
-              <span>Away Win: <strong>{Number(matchBets?.decryptedAwayWinTotal || 0)} bets</strong></span>
-              <span>Draw: <strong>{Number(matchBets?.decryptedDrawTotal || 0)} bets</strong></span>
+        {/* Match Time */}
+        <div className="info-section">
+          <div className="info-title">🏟️ Match Time</div>
+          <div className="time-item">
+            <span className="time-label">Scheduled:</span>
+            <span className="time-value">{formatTime(match.matchTime)}</span>
+          </div>
+        </div>
+
+        {/* Betting Statistics */}
+        <div className="betting-stats">
+          <div className="info-title">📊 Betting Statistics</div>
+          <div className="stats-grid">
+            <div className="stat-item">
+              <div className="stat-label">Home Win</div>
+              <div className="stat-value">
+                {Boolean(matchBets?.isTotalDecrypted) 
+                  ? Number(matchBets?.decryptedHomeWinTotal || 0)
+                  : '***'
+                }
+              </div>
             </div>
-          ) : (
-            <div className="flex justify-between text-sm">
-              <span>Home Win: <strong>***</strong></span>
-              <span>Away Win: <strong>***</strong></span>
-              <span>Draw: <strong>***</strong></span>
+            <div className="stat-item">
+              <div className="stat-label">Draw</div>
+              <div className="stat-value">
+                {Boolean(matchBets?.isTotalDecrypted) 
+                  ? Number(matchBets?.decryptedDrawTotal || 0)
+                  : '***'
+                }
+              </div>
             </div>
-          )}
+            <div className="stat-item">
+              <div className="stat-label">Away Win</div>
+              <div className="stat-value">
+                {Boolean(matchBets?.isTotalDecrypted) 
+                  ? Number(matchBets?.decryptedAwayWinTotal || 0)
+                  : '***'
+                }
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* User bet status */}
         {hasBet && (
-          <div className="text-sm text-green mb-4">
-            <p>✓ You have bet on this match</p>
-            {userBet?.hasSettled && <p>✓ Settled</p>}
+          <div className="user-bet-indicator">
+            <div className="bet-success-text">You have bet on this match</div>
+            {userBet?.hasSettled && <div className="settled-text">✓ Settled</div>}
           </div>
         )}
 

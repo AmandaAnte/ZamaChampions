@@ -3,14 +3,14 @@ import { useFootballBettingContract } from '../hooks/useContract'
 
 const AdminPanel: React.FC = () => {
   const { createMatch, finishMatch, withdraw, isWritePending } = useFootballBettingContract()
-  
+
   // Helper function to format datetime for input
   const getDefaultDateTime = (minutesFromNow: number) => {
     const date = new Date()
     date.setMinutes(date.getMinutes() + minutesFromNow)
     return date.toISOString().slice(0, 16) // Format: YYYY-MM-DDTHH:mm
   }
-  
+
   const [formData, setFormData] = useState({
     homeTeam: 'Real Madrid',
     awayTeam: 'Barcelona',
@@ -19,20 +19,20 @@ const AdminPanel: React.FC = () => {
     bettingEndTime: getDefaultDateTime(30),   // 30 minutes from now  
     matchTime: getDefaultDateTime(60),        // 1 hour from now
   })
-  
+
   const [finishMatchData, setFinishMatchData] = useState({
     matchId: '',
     result: '1',
   })
-  
+
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
   const handleCreateMatch = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     const { homeTeam, awayTeam, matchName, bettingStartTime, bettingEndTime, matchTime } = formData
-    
+
     if (!homeTeam || !awayTeam || !matchName || !bettingStartTime || !bettingEndTime || !matchTime) {
       setError('Please fill in all fields')
       return
@@ -41,12 +41,12 @@ const AdminPanel: React.FC = () => {
     const bettingStart = Math.floor(new Date(bettingStartTime).getTime() / 1000)
     const bettingEnd = Math.floor(new Date(bettingEndTime).getTime() / 1000)
     const matchTimestamp = Math.floor(new Date(matchTime).getTime() / 1000)
-    
+
     if (bettingStart >= bettingEnd) {
       setError('Betting end time must be later than start time')
       return
     }
-    
+
     // Allow current time betting for testing
     // if (bettingStart <= Math.floor(Date.now() / 1000)) {
     //   setError('Betting start time must be in the future')
@@ -56,7 +56,7 @@ const AdminPanel: React.FC = () => {
     try {
       setError('')
       setSuccess('')
-      
+
       await createMatch(
         homeTeam,
         awayTeam,
@@ -65,7 +65,7 @@ const AdminPanel: React.FC = () => {
         BigInt(bettingEnd),
         BigInt(matchTimestamp)
       )
-      
+
       setSuccess('Creating match...')
     } catch (err: any) {
       console.error('Failed to create match:', err)
@@ -75,9 +75,9 @@ const AdminPanel: React.FC = () => {
 
   const handleFinishMatch = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     const { matchId, result } = finishMatchData
-    
+
     if (!matchId || !result) {
       setError('Please fill in all fields')
       return
@@ -86,9 +86,9 @@ const AdminPanel: React.FC = () => {
     try {
       setError('')
       setSuccess('')
-      
+
       finishMatch(BigInt(matchId), Number(result))
-      
+
       setSuccess('Match result submitted!')
       setFinishMatchData({ matchId: '', result: '1' })
     } catch (err: any) {
@@ -101,9 +101,9 @@ const AdminPanel: React.FC = () => {
     try {
       setError('')
       setSuccess('')
-      
+
       withdraw()
-      
+
       setSuccess('Withdrawal successful!')
     } catch (err: any) {
       console.error('Withdrawal failed:', err)
@@ -132,7 +132,7 @@ const AdminPanel: React.FC = () => {
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
-      
+
       {/* Create Match */}
       <div className="card">
         <h2>Create New Match</h2>
@@ -150,7 +150,7 @@ const AdminPanel: React.FC = () => {
                 required
               />
             </div>
-            
+
             <div className="form-group">
               <label className="form-label">Away Team Name</label>
               <input
@@ -177,7 +177,7 @@ const AdminPanel: React.FC = () => {
               />
             </div>
           </div>
-          
+
           <div className="grid grid-3 gap-4">
             <div className="form-group">
               <label className="form-label">Betting Start Time</label>
@@ -190,14 +190,14 @@ const AdminPanel: React.FC = () => {
                 required
               />
             </div>
-            
+
             <div className="form-group">
               <label className="form-label">Betting End Time</label>
               <input
                 type="datetime-local"
                 name="bettingEndTime"
                 className="input"
-                value={formData.bettingEndTime }
+                value={formData.bettingEndTime}
                 onChange={handleInputChange}
                 required
               />
@@ -215,7 +215,7 @@ const AdminPanel: React.FC = () => {
               />
             </div>
           </div>
-          
+
           <button
             type="submit"
             className="button w-full"
@@ -244,7 +244,7 @@ const AdminPanel: React.FC = () => {
               required
             />
           </div>
-          
+
           <div className="form-group">
             <label className="form-label">Match Result</label>
             <select
@@ -259,7 +259,7 @@ const AdminPanel: React.FC = () => {
               <option value="3">Draw</option>
             </select>
           </div>
-          
+
           <button
             type="submit"
             className="button w-full"
@@ -268,8 +268,8 @@ const AdminPanel: React.FC = () => {
             {isWritePending ? 'Submitting...' : 'Finish Match'}
           </button>
         </form>
-        
-        <div className="mt-4">
+
+        {/* <div className="mt-4">
           <button
             className="button button-secondary w-full"
             onClick={handleWithdraw}
@@ -277,7 +277,7 @@ const AdminPanel: React.FC = () => {
           >
             {isWritePending ? 'Withdrawing...' : 'Withdraw Contract Balance'}
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Admin Instructions */}
