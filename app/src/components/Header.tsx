@@ -12,27 +12,27 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, isOwner }) => 
     <header className="header">
       <div className="container">
         <div className="header-content">
-          <div className="logo">⚽ 足球博彩 DApp</div>
+          <div className="logo">⚽ Football Betting DApp</div>
           
           <nav className="flex gap-4">
             <button
               className={`button ${activeTab === 'dashboard' ? '' : 'button-secondary'}`}
               onClick={() => setActiveTab('dashboard')}
             >
-              用户面板
+              Dashboard
             </button>
             <button
               className={`button ${activeTab === 'matches' ? '' : 'button-secondary'}`}
               onClick={() => setActiveTab('matches')}
             >
-              比赛列表
+              Matches
             </button>
             {isOwner && (
               <button
                 className={`button ${activeTab === 'admin' ? '' : 'button-secondary'}`}
                 onClick={() => setActiveTab('admin')}
               >
-                管理面板
+                Admin Panel
               </button>
             )}
           </nav>

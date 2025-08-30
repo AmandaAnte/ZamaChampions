@@ -24,7 +24,7 @@ const Dashboard: React.FC = () => {
 
   const handleBuyPoints = async () => {
     if (!ethAmount || isNaN(Number(ethAmount)) || Number(ethAmount) <= 0) {
-      setError('请输入有效的ETH数量')
+      setError('Please enter a valid ETH amount')
       return
     }
 
@@ -35,7 +35,7 @@ const Dashboard: React.FC = () => {
       const value = parseEther(ethAmount)
       await buyPoints(value)
       
-      setSuccess(`成功购买 ${Number(ethAmount) * ETH_TO_POINTS_RATE} 积分`)
+      setSuccess(`Successfully purchased ${Number(ethAmount) * ETH_TO_POINTS_RATE} FootPoints`)
       setEthAmount('')
       
       // Refresh points after purchase
@@ -43,14 +43,14 @@ const Dashboard: React.FC = () => {
         refetchPoints()
       }, 2000)
     } catch (err: any) {
-      console.error('买点失败:', err)
-      setError(err.message || '买点失败')
+      console.error('Buy points failed:', err)
+      setError(err.message || 'Failed to buy points')
     }
   }
 
   const handleDecryptPoints = async () => {
     if (!encryptedPoints || !address || !walletClient) {
-      setError('无法解密积分：缺少必要数据')
+      setError('Cannot decrypt points: missing required data')
       return
     }
 
@@ -70,8 +70,8 @@ const Dashboard: React.FC = () => {
       
       setDecryptedPoints(Number(decrypted))
     } catch (err: any) {
-      console.error('解密积分失败:', err)
-      setError('解密积分失败：' + (err.message || '未知错误'))
+      console.error('Decrypt points failed:', err)
+      setError('Failed to decrypt points: ' + (err.message || 'unknown error'))
     } finally {
       setIsDecrypting(false)
     }
@@ -81,12 +81,12 @@ const Dashboard: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">用户面板</h1>
+      <h1 className="text-3xl font-bold mb-6">User Dashboard</h1>
       
       <div className="grid grid-2">
-        {/* 用户积分 */}
+        {/* User Points */}
         <div className="card">
-          <h2>我的积分</h2>
+          <h2>My Points</h2>
           <div className="text-center">
             {decryptedPoints !== null ? (
               <div className="text-4xl font-bold text-green mb-4">
@@ -94,30 +94,30 @@ const Dashboard: React.FC = () => {
               </div>
             ) : (
               <div className="text-gray mb-4">
-                <p>积分已加密，点击解密查看</p>
+                <p>Points are encrypted, click to decrypt and view</p>
                 <button 
                   className="button mt-2"
                   onClick={handleDecryptPoints}
                   disabled={isDecrypting || !encryptedPoints}
                 >
-                  {isDecrypting ? '解密中...' : '解密查看积分'}
+                  {isDecrypting ? 'Decrypting...' : 'Decrypt to View Points'}
                 </button>
               </div>
             )}
             <p className="text-sm text-gray">
-              1 注 = 100 积分 | 1 ETH = {ETH_TO_POINTS_RATE.toLocaleString()} 积分
+              1 bet = 100 points | 1 ETH = {ETH_TO_POINTS_RATE.toLocaleString()} points
             </p>
           </div>
         </div>
 
-        {/* 购买积分 */}
+        {/* Buy Points */}
         <div className="card">
-          <h2>购买积分</h2>
+          <h2>Buy Points</h2>
           {error && <div className="error">{error}</div>}
           {success && <div className="success">{success}</div>}
           
           <div className="form-group">
-            <label className="form-label">ETH 数量</label>
+            <label className="form-label">ETH Amount</label>
             <input
               type="number"
               step="0.001"
@@ -129,7 +129,7 @@ const Dashboard: React.FC = () => {
             />
             {pointsFromEth > 0 && (
               <p className="text-sm text-green">
-                将获得 {pointsFromEth.toLocaleString()} 积分
+                You will receive {pointsFromEth.toLocaleString()} points
               </p>
             )}
           </div>
@@ -139,19 +139,19 @@ const Dashboard: React.FC = () => {
             onClick={handleBuyPoints}
             disabled={isWritePending || !ethAmount}
           >
-            {isWritePending ? '购买中...' : '购买积分'}
+            {isWritePending ? 'Purchasing...' : 'Buy Points'}
           </button>
         </div>
       </div>
 
-      {/* 积分说明 */}
+      {/* Points Information */}
       <div className="card">
-        <h3>积分说明</h3>
+        <h3>Points Information</h3>
         <ul className="space-y-2 text-gray">
-          <li>• 使用ETH购买积分，兑换比例为 1 ETH = {ETH_TO_POINTS_RATE.toLocaleString()} 积分</li>
-          <li>• 每次押注消耗 100 积分</li>
-          <li>• 积分采用Zama FHE加密存储，保护用户隐私</li>
-          <li>• 押注获胜后，根据获胜比例分配总奖池</li>
+          <li>• Use ETH to buy points, exchange rate: 1 ETH = {ETH_TO_POINTS_RATE.toLocaleString()} points</li>
+          <li>• Each bet consumes 100 points</li>
+          <li>• Points are encrypted with Zama FHE to protect user privacy</li>
+          <li>• After winning bets, the total prize pool is distributed proportionally</li>
         </ul>
       </div>
     </div>

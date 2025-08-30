@@ -39,7 +39,7 @@ function App() {
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-8">Football Betting DApp</h1>
           <p className="text-lg mb-8 text-gray">
-            基于FHE的加密足球博彩平台
+            FHE-powered Encrypted Football Betting Platform
           </p>
           <ConnectButton />
         </div>
@@ -52,7 +52,7 @@ function App() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="loading mb-4"></div>
-          <p>正在初始化FHE环境...</p>
+          <p>Initializing FHE environment...</p>
         </div>
       </div>
     )

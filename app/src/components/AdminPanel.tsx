@@ -5,9 +5,9 @@ const AdminPanel: React.FC = () => {
   const { createMatch, finishMatch, withdraw, isWritePending } = useFootballBettingContract()
   
   const [formData, setFormData] = useState({
-    homeTeam: '皇家马德里',
-    awayTeam: '巴塞罗那',
-    matchName: '国家德比',
+    homeTeam: 'Real Madrid',
+    awayTeam: 'Barcelona',
+    matchName: 'El Clásico',
     bettingStartTime: '',
     bettingEndTime: '',
     matchTime: '',
@@ -27,7 +27,7 @@ const AdminPanel: React.FC = () => {
     const { homeTeam, awayTeam, matchName, bettingStartTime, bettingEndTime, matchTime } = formData
     
     if (!homeTeam || !awayTeam || !matchName || !bettingStartTime || !bettingEndTime || !matchTime) {
-      setError('请填写所有字段')
+      setError('Please fill in all fields')
       return
     }
 
@@ -36,13 +36,13 @@ const AdminPanel: React.FC = () => {
     const matchTimestamp = Math.floor(new Date(matchTime).getTime() / 1000)
     
     if (bettingStart >= bettingEnd) {
-      setError('押注结束时间必须晚于开始时间')
+      setError('Betting end time must be later than start time')
       return
     }
     
-    // 允许当前时间押注，用于测试
+    // Allow current time betting for testing
     // if (bettingStart <= Math.floor(Date.now() / 1000)) {
-    //   setError('押注开始时间必须在未来')
+    //   setError('Betting start time must be in the future')
     //   return
     // }
 
@@ -59,10 +59,10 @@ const AdminPanel: React.FC = () => {
         BigInt(matchTimestamp)
       )
       
-      setSuccess('比赛创建中...')
+      setSuccess('Creating match...')
     } catch (err: any) {
-      console.error('创建比赛失败:', err)
-      setError(err.message || '创建比赛失败')
+      console.error('Failed to create match:', err)
+      setError(err.message || 'Failed to create match')
     }
   }
 
@@ -72,7 +72,7 @@ const AdminPanel: React.FC = () => {
     const { matchId, result } = finishMatchData
     
     if (!matchId || !result) {
-      setError('请填写所有字段')
+      setError('Please fill in all fields')
       return
     }
 
@@ -82,11 +82,11 @@ const AdminPanel: React.FC = () => {
       
       finishMatch(BigInt(matchId), Number(result))
       
-      setSuccess('比赛结果已提交！')
+      setSuccess('Match result submitted!')
       setFinishMatchData({ matchId: '', result: '1' })
     } catch (err: any) {
-      console.error('结束比赛失败:', err)
-      setError(err.message || '结束比赛失败')
+      console.error('Failed to finish match:', err)
+      setError(err.message || 'Failed to finish match')
     }
   }
 
@@ -97,10 +97,10 @@ const AdminPanel: React.FC = () => {
       
       withdraw()
       
-      setSuccess('提现成功！')
+      setSuccess('Withdrawal successful!')
     } catch (err: any) {
-      console.error('提现失败:', err)
-      setError(err.message || '提现失败')
+      console.error('Withdrawal failed:', err)
+      setError(err.message || 'Withdrawal failed')
     }
   }
 
@@ -124,20 +124,20 @@ const AdminPanel: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">管理面板</h1>
+      <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
       
-      {/* 创建比赛 */}
+      {/* Create Match */}
       <div className="card">
-        <h2>创建新比赛</h2>
+        <h2>Create New Match</h2>
         <form onSubmit={handleCreateMatch}>
           <div className="grid grid-3 gap-4">
             <div className="form-group">
-              <label className="form-label">主队名称</label>
+              <label className="form-label">Home Team Name</label>
               <input
                 type="text"
                 name="homeTeam"
                 className="input"
-                placeholder="例如：皇家马德里"
+                placeholder="e.g.: Real Madrid"
                 value={formData.homeTeam}
                 onChange={handleInputChange}
                 required
@@ -145,12 +145,12 @@ const AdminPanel: React.FC = () => {
             </div>
             
             <div className="form-group">
-              <label className="form-label">客队名称</label>
+              <label className="form-label">Away Team Name</label>
               <input
                 type="text"
                 name="awayTeam"
                 className="input"
-                placeholder="例如：巴塞罗那"
+                placeholder="e.g.: Barcelona"
                 value={formData.awayTeam}
                 onChange={handleInputChange}
                 required
@@ -158,12 +158,12 @@ const AdminPanel: React.FC = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">比赛名称</label>
+              <label className="form-label">Match Name</label>
               <input
                 type="text"
                 name="matchName"
                 className="input"
-                placeholder="例如：国家德比"
+                placeholder="e.g.: El Clásico"
                 value={formData.matchName}
                 onChange={handleInputChange}
                 required
@@ -173,7 +173,7 @@ const AdminPanel: React.FC = () => {
           
           <div className="grid grid-3 gap-4">
             <div className="form-group">
-              <label className="form-label">押注开始时间</label>
+              <label className="form-label">Betting Start Time</label>
               <input
                 type="datetime-local"
                 name="bettingStartTime"
@@ -185,7 +185,7 @@ const AdminPanel: React.FC = () => {
             </div>
             
             <div className="form-group">
-              <label className="form-label">押注结束时间</label>
+              <label className="form-label">Betting End Time</label>
               <input
                 type="datetime-local"
                 name="bettingEndTime"
@@ -197,7 +197,7 @@ const AdminPanel: React.FC = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">比赛时间</label>
+              <label className="form-label">Match Time</label>
               <input
                 type="datetime-local"
                 name="matchTime"
@@ -214,24 +214,24 @@ const AdminPanel: React.FC = () => {
             className="button w-full"
             disabled={isWritePending}
           >
-            {isWritePending ? '创建中...' : '创建比赛'}
+            {isWritePending ? 'Creating...' : 'Create Match'}
           </button>
         </form>
       </div>
-      {/* 状态消息 - 放在页面底部 */}
+      {/* Status Messages - placed at bottom */}
       {error && <div className="error mt-4">{error}</div>}
       {success && <div className="success mt-4">{success}</div>}
-      {/* 结束比赛 */}
+      {/* Finish Match */}
       <div className="card">
-        <h2>结束比赛</h2>
+        <h2>Finish Match</h2>
         <form onSubmit={handleFinishMatch}>
           <div className="form-group">
-            <label className="form-label">比赛ID</label>
+            <label className="form-label">Match ID</label>
             <input
               type="number"
               name="matchId"
               className="input"
-              placeholder="例如：1"
+              placeholder="e.g.: 1"
               value={finishMatchData.matchId}
               onChange={handleFinishInputChange}
               required
@@ -239,7 +239,7 @@ const AdminPanel: React.FC = () => {
           </div>
           
           <div className="form-group">
-            <label className="form-label">比赛结果</label>
+            <label className="form-label">Match Result</label>
             <select
               name="result"
               className="input"
@@ -247,9 +247,9 @@ const AdminPanel: React.FC = () => {
               onChange={handleFinishInputChange}
               required
             >
-              <option value="1">主队获胜</option>
-              <option value="2">客队获胜</option>
-              <option value="3">平局</option>
+              <option value="1">Home Win</option>
+              <option value="2">Away Win</option>
+              <option value="3">Draw</option>
             </select>
           </div>
           
@@ -258,7 +258,7 @@ const AdminPanel: React.FC = () => {
             className="button w-full"
             disabled={isWritePending}
           >
-            {isWritePending ? '提交中...' : '结束比赛'}
+            {isWritePending ? 'Submitting...' : 'Finish Match'}
           </button>
         </form>
         
@@ -268,20 +268,20 @@ const AdminPanel: React.FC = () => {
             onClick={handleWithdraw}
             disabled={isWritePending}
           >
-            {isWritePending ? '提现中...' : '提取合约余额'}
+            {isWritePending ? 'Withdrawing...' : 'Withdraw Contract Balance'}
           </button>
         </div>
       </div>
 
-      {/* 管理说明 */}
+      {/* Admin Instructions */}
       <div className="card">
-        <h3>管理说明</h3>
+        <h3>Admin Instructions</h3>
         <ul className="space-y-2 text-gray">
-          <li>• 创建比赛时，押注开始时间必须在未来</li>
-          <li>• 押注结束时间必须晚于开始时间</li>
-          <li>• 比赛结束后，系统会自动解密总押注数据</li>
-          <li>• 用户需要手动点击结算来获取奖励</li>
-          <li>• 可以随时提取合约中的ETH余额</li>
+          <li>• When creating matches, betting start time must be in the future</li>
+          <li>• Betting end time must be later than start time</li>
+          <li>• After match ends, system will automatically decrypt total betting data</li>
+          <li>• Users need to manually click settlement to claim rewards</li>
+          <li>• Contract ETH balance can be withdrawn at any time</li>
         </ul>
       </div>
 
