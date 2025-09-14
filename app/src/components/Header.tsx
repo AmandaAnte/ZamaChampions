@@ -12,8 +12,8 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, isOwner }) => 
     <header className="header">
       <div className="container">
         <div className="header-content">
-          <div className="logo">⚽ Football Betting DApp</div>
-          
+          <div className="logo">⚽ Champion Betting</div>
+
           <nav className="flex gap-4">
             <button
               className={`button ${activeTab === 'dashboard' ? '' : 'button-secondary'}`}

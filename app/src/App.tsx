@@ -37,7 +37,7 @@ function App() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-8">Football Betting DApp</h1>
+          <h1 className="text-4xl font-bold mb-8">Champion Betting</h1>
           <p className="text-lg mb-8 text-gray">
             FHE-powered Encrypted Football Betting Platform
           </p>
@@ -60,12 +60,12 @@ function App() {
 
   return (
     <div className="min-h-screen">
-      <Header 
-        activeTab={activeTab} 
+      <Header
+        activeTab={activeTab}
         setActiveTab={setActiveTab}
         isOwner={!!isOwner}
       />
-      
+
       <main className="main">
         <div className="container">
           {activeTab === 'dashboard' && <Dashboard />}

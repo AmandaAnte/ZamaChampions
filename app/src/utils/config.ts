@@ -3,7 +3,7 @@ import { sepolia } from 'wagmi/chains'
 import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 
 export const config = getDefaultConfig({
-  appName: 'Football Betting DApp',
+  appName: 'Champion Betting',
   projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
   chains: [sepolia],
   transports: {
@@ -12,7 +12,7 @@ export const config = getDefaultConfig({
 })
 
 // Contract addresses - update these after deployment
-export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '0xb878Ef9Db92a8F248f297300ecef959998Eef4b9' as const
+export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '0xeebe78957a8774d8e895570ad8317f5bf1d135cb' as const
 
 // Zama FHE configuration for Sepolia
 export const FHEVM_CONFIG = {
