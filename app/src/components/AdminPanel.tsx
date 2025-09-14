@@ -57,7 +57,7 @@ const AdminPanel: React.FC = () => {
       setError('')
       setSuccess('')
 
-      await createMatch(
+      const txHash = await createMatch(
         homeTeam,
         awayTeam,
         matchName,
@@ -66,7 +66,7 @@ const AdminPanel: React.FC = () => {
         BigInt(matchTimestamp)
       )
 
-      setSuccess('Creating match...')
+      setSuccess(`Match creation tx sent: https://sepolia.etherscan.io/tx/${txHash}`)
     } catch (err: any) {
       console.error('Failed to create match:', err)
       setError(err.message || 'Failed to create match')
@@ -87,9 +87,9 @@ const AdminPanel: React.FC = () => {
       setError('')
       setSuccess('')
 
-      finishMatch(BigInt(matchId), Number(result))
+      const txHash = await finishMatch(BigInt(matchId), Number(result))
 
-      setSuccess('Match result submitted!')
+      setSuccess(`Match result tx: https://sepolia.etherscan.io/tx/${txHash}`)
       setFinishMatchData({ matchId: '', result: '1' })
     } catch (err: any) {
       console.error('Failed to finish match:', err)
@@ -102,9 +102,9 @@ const AdminPanel: React.FC = () => {
       setError('')
       setSuccess('')
 
-      withdraw()
+      const txHash = await withdraw()
 
-      setSuccess('Withdrawal successful!')
+      setSuccess(`Withdrawal tx: https://sepolia.etherscan.io/tx/${txHash}`)
     } catch (err: any) {
       console.error('Withdrawal failed:', err)
       setError(err.message || 'Withdrawal failed')
@@ -269,7 +269,7 @@ const AdminPanel: React.FC = () => {
           </button>
         </form>
 
-        {/* <div className="mt-4">
+        <div className="mt-4">
           <button
             className="button button-secondary w-full"
             onClick={handleWithdraw}
@@ -277,7 +277,7 @@ const AdminPanel: React.FC = () => {
           >
             {isWritePending ? 'Withdrawing...' : 'Withdraw Contract Balance'}
           </button>
-        </div> */}
+        </div>
       </div>
 
       {/* Admin Instructions */}

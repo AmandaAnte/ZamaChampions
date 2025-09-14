@@ -57,7 +57,7 @@ contract FootballBetting is SepoliaConfig {
 
     // Mapping from decryption request ID to match ID (for match totals decryption)
     mapping(uint256 requestId => uint256 matchId) private decryptionRequestToMatch;
-    
+
     // Mapping from decryption request ID to user bet info (for user bet decryption)
     struct UserBetRequest {
         address user;
@@ -332,12 +332,9 @@ contract FootballBetting is SepoliaConfig {
         cts[1] = FHE.toBytes32(userBet.betAmount);
 
         uint256 requestId = FHE.requestDecryption(cts, this.decryptUserBetCallback.selector);
-        
+
         // Store requestId to user and matchId mapping
-        userBetDecryptionRequests[requestId] = UserBetRequest({
-            user: msg.sender,
-            matchId: matchId
-        });
+        userBetDecryptionRequests[requestId] = UserBetRequest({user: msg.sender, matchId: matchId});
 
         emit UserDecryptionRequested(matchId, msg.sender);
     }
@@ -354,18 +351,18 @@ contract FootballBetting is SepoliaConfig {
         // Get user and match info from mapping
         UserBetRequest memory request = userBetDecryptionRequests[requestId];
         require(request.user != address(0), "Invalid request ID");
-        
+
         address user = request.user;
         uint256 matchId = request.matchId;
-        
+
         require(matches[matchId].isFinished, "Match not finished");
         require(matchBets[matchId].isTotalDecrypted, "Match totals not decrypted yet");
-        
+
         UserBet storage userBet = userBets[matchId][user];
         require(FHE.isInitialized(userBet.betDirection), "No bet found");
-        require(!userBet.hasSettled, "Already settled");
+        require(!userBet.hasSettled, "Already settled!");
         require(!userBet.isDecrypted, "Already decrypted");
-        
+
         // Check if won
         uint8 matchResult = matches[matchId].result;
         if (betDirection == matchResult) {
@@ -410,7 +407,7 @@ contract FootballBetting is SepoliaConfig {
         // Mark as settled and decrypted
         userBet.hasSettled = true;
         userBet.isDecrypted = true;
-        
+
         // Clean up mapping to save gas
         delete userBetDecryptionRequests[requestId];
     }

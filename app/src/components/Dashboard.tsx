@@ -33,9 +33,9 @@ const Dashboard: React.FC = () => {
       setSuccess('')
       
       const value = parseEther(ethAmount)
-      await buyPoints(value)
+      const txHash = await buyPoints(value)
       
-      setSuccess(`Successfully purchased ${Number(ethAmount) * ETH_TO_POINTS_RATE} FootPoints`)
+      setSuccess(`Purchased ${Number(ethAmount) * ETH_TO_POINTS_RATE} FootPoints — https://sepolia.etherscan.io/tx/${txHash}`)
       setEthAmount('')
       
       // Refresh points after purchase

@@ -104,14 +104,14 @@ const MatchList: React.FC = () => {
 
       console.log('Data encryption complete, calling contract...')
 
-      await placeBet(
+      const txHash = await placeBet(
         matchId,
         convertHex(encryptedData.handles[0]), // betDirection
         convertHex(encryptedData.handles[1]), // betCount
         convertHex(encryptedData.inputProof)
       )
 
-      setSuccess(`Bet placed successfully! Consumed ${Number(betCount) * BET_UNIT} points`)
+      setSuccess(`Bet placed! Consumed ${Number(betCount) * BET_UNIT} points — https://sepolia.etherscan.io/tx/${txHash}`)
       closeBettingModal()
     } catch (err: any) {
       console.error('Bet placement failed:', err)
@@ -124,9 +124,9 @@ const MatchList: React.FC = () => {
       setError('')
       setSuccess('')
 
-      await settleBet(matchId)
+      const txHash = await settleBet(matchId)
 
-      setSuccess('Settlement successful!')
+      setSuccess(`Settlement sent: https://sepolia.etherscan.io/tx/${txHash}`)
     } catch (err: any) {
       console.error('Settlement failed:', err)
       setError(err.message || 'Settlement failed')
