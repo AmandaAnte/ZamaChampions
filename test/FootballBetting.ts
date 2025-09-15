@@ -29,228 +29,454 @@ describe("FootballBetting", function () {
       expect(await footballBetting.owner()).to.equal(ownerAddress);
     });
 
-    it("Should initialize with zero game counter", async function () {
-      expect(await footballBetting.gameCounter()).to.equal(0);
+    it("Should initialize with zero match counter", async function () {
+      expect(await footballBetting.matchCounter()).to.equal(0);
+    });
+
+    it("Should have correct constants", async function () {
+      expect(await footballBetting.BET_UNIT()).to.equal(100);
+      expect(await footballBetting.ETH_TO_POINTS_RATE()).to.equal(100000);
     });
   });
 
-  describe("Deposit ETH for FootPoints", function () {
-    it("Should allow users to deposit ETH and receive FootPoints", async function () {
+  describe("Buy Points", function () {
+    it("Should allow users to buy points with ETH", async function () {
       const depositAmount = ethers.parseEther("1");
-      
-      await footballBetting.connect(user1).depositETHForPoints({ value: depositAmount });
-      
-      const encryptedBalance = await footballBetting.connect(user1).getUserFootPoints();
+
+      await expect(
+        footballBetting.connect(user1).buyPoints({ value: depositAmount })
+      ).to.emit(footballBetting, "PointsPurchased")
+        .withArgs(user1Address, depositAmount, 100000n);
+
+      const encryptedBalance = await footballBetting.connect(user1).getUserPoints(user1Address);
       const decryptedBalance = await fhevm.userDecryptEuint(
         FhevmType.euint32,
         encryptedBalance,
         await footballBetting.getAddress(),
         user1
       );
-      
-      expect(decryptedBalance).to.equal(100000); // 1 ETH = 100000 FootPoints
+
+      expect(decryptedBalance).to.equal(100000); // 1 ETH = 100000 points
     });
 
     it("Should revert when no ETH is sent", async function () {
       await expect(
-        footballBetting.connect(user1).depositETHForPoints({ value: 0 })
-      ).to.be.revertedWith("Must send ETH");
+        footballBetting.connect(user1).buyPoints({ value: 0 })
+      ).to.be.revertedWith("Must send ETH to buy points");
     });
 
-    it("Should accumulate FootPoints from multiple deposits", async function () {
+    it("Should accumulate points from multiple purchases", async function () {
       const depositAmount1 = ethers.parseEther("0.5");
       const depositAmount2 = ethers.parseEther("0.3");
-      
-      await footballBetting.connect(user1).depositETHForPoints({ value: depositAmount1 });
-      await footballBetting.connect(user1).depositETHForPoints({ value: depositAmount2 });
-      
-      const encryptedBalance = await footballBetting.connect(user1).getUserFootPoints();
+
+      await footballBetting.connect(user1).buyPoints({ value: depositAmount1 });
+      await footballBetting.connect(user1).buyPoints({ value: depositAmount2 });
+
+      const encryptedBalance = await footballBetting.connect(user1).getUserPoints(user1Address);
       const decryptedBalance = await fhevm.userDecryptEuint(
         FhevmType.euint32,
         encryptedBalance,
         await footballBetting.getAddress(),
         user1
       );
-      
-      expect(decryptedBalance).to.equal(80000); // 0.8 ETH = 80000 FootPoints
+
+      expect(decryptedBalance).to.equal(80000); // 0.8 ETH = 80000 points
     });
   });
 
-  describe("Game Management", function () {
-    it("Should allow owner to create a game", async function () {
-      const startTime = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
-      
+  describe("Match Management", function () {
+    it("Should allow owner to create a match", async function () {
+      const currentTime = Math.floor(Date.now() / 1000);
+      const bettingStartTime = currentTime + 3600; // 1 hour from now
+      const bettingEndTime = currentTime + 7200; // 2 hours from now
+      const matchTime = currentTime + 10800; // 3 hours from now
+
       await expect(
-        footballBetting.connect(owner).createGame("Team A", "Team B", startTime)
-      ).to.emit(footballBetting, "GameCreated")
-        .withArgs(0, "Team A", "Team B", startTime);
-      
-      expect(await footballBetting.gameCounter()).to.equal(1);
-      
-      const gameInfo = await footballBetting.getGameInfo(0);
-      expect(gameInfo.homeTeam).to.equal("Team A");
-      expect(gameInfo.awayTeam).to.equal("Team B");
-      expect(gameInfo.startTime).to.equal(startTime);
-      expect(gameInfo.status).to.equal(0); // BETTING_OPEN
+        footballBetting.connect(owner).createMatch(
+          "Team A",
+          "Team B",
+          "Premier League Match 1",
+          bettingStartTime,
+          bettingEndTime,
+          matchTime
+        )
+      ).to.emit(footballBetting, "MatchCreated")
+        .withArgs(1, "Team A", "Team B", "Premier League Match 1");
+
+      expect(await footballBetting.matchCounter()).to.equal(1);
+
+      const matchInfo = await footballBetting.getMatch(1);
+      expect(matchInfo.homeTeam).to.equal("Team A");
+      expect(matchInfo.awayTeam).to.equal("Team B");
+      expect(matchInfo.matchName).to.equal("Premier League Match 1");
+      expect(matchInfo.bettingStartTime).to.equal(bettingStartTime);
+      expect(matchInfo.bettingEndTime).to.equal(bettingEndTime);
+      expect(matchInfo.matchTime).to.equal(matchTime);
+      expect(matchInfo.isActive).to.be.true;
+      expect(matchInfo.isFinished).to.be.false;
+      expect(matchInfo.result).to.equal(0);
     });
 
-    it("Should not allow non-owner to create a game", async function () {
-      const startTime = Math.floor(Date.now() / 1000) + 3600;
-      
+    it("Should not allow non-owner to create a match", async function () {
+      const currentTime = Math.floor(Date.now() / 1000);
+      const bettingStartTime = currentTime + 3600;
+      const bettingEndTime = currentTime + 7200;
+      const matchTime = currentTime + 10800;
+
       await expect(
-        footballBetting.connect(user1).createGame("Team A", "Team B", startTime)
+        footballBetting.connect(user1).createMatch(
+          "Team A",
+          "Team B",
+          "Test Match",
+          bettingStartTime,
+          bettingEndTime,
+          matchTime
+        )
       ).to.be.revertedWith("Only owner can call this function");
     });
 
-    it("Should not allow creating a game with past start time", async function () {
-      const pastTime = Math.floor(Date.now() / 1000) - 3600; // 1 hour ago
-      
+    it("Should not allow creating a match with invalid time ranges", async function () {
+      const currentTime = Math.floor(Date.now() / 1000);
+      const bettingStartTime = currentTime + 7200;
+      const bettingEndTime = currentTime + 3600; // End before start
+      const matchTime = currentTime + 10800;
+
       await expect(
-        footballBetting.connect(owner).createGame("Team A", "Team B", pastTime)
-      ).to.be.revertedWith("Start time must be in the future");
+        footballBetting.connect(owner).createMatch(
+          "Team A",
+          "Team B",
+          "Test Match",
+          bettingStartTime,
+          bettingEndTime,
+          matchTime
+        )
+      ).to.be.revertedWith("Invalid betting time range");
     });
 
-    it("Should allow owner to close betting", async function () {
-      const startTime = Math.floor(Date.now() / 1000) + 3600;
-      await footballBetting.connect(owner).createGame("Team A", "Team B", startTime);
-      
-      await expect(
-        footballBetting.connect(owner).closeBetting(0)
-      ).to.emit(footballBetting, "GameClosed")
-        .withArgs(0);
-      
-      const gameInfo = await footballBetting.getGameInfo(0);
-      expect(gameInfo.status).to.equal(1); // BETTING_CLOSED
-    });
+    it("Should not allow creating a match with past start time", async function () {
+      const currentTime = Math.floor(Date.now() / 1000);
+      const bettingStartTime = currentTime - 3600; // 1 hour ago
+      const bettingEndTime = currentTime + 3600;
+      const matchTime = currentTime + 7200;
 
-    it("Should allow owner to settle a game", async function () {
-      const startTime = Math.floor(Date.now() / 1000) + 3600;
-      await footballBetting.connect(owner).createGame("Team A", "Team B", startTime);
-      await footballBetting.connect(owner).closeBetting(0);
-      
       await expect(
-        footballBetting.connect(owner).settleGame(0, 0) // HOME_WIN
-      ).to.emit(footballBetting, "GameSettled")
-        .withArgs(0, 0);
-      
-      const gameInfo = await footballBetting.getGameInfo(0);
-      expect(gameInfo.status).to.equal(2); // SETTLED
+        footballBetting.connect(owner).createMatch(
+          "Team A",
+          "Team B",
+          "Test Match",
+          bettingStartTime,
+          bettingEndTime,
+          matchTime
+        )
+      ).to.be.revertedWith("Betting start time must be in future");
     });
   });
 
   describe("Betting", function () {
+    let matchId: number;
+
     beforeEach(async function () {
-      // Create a game
-      const startTime = Math.floor(Date.now() / 1000) + 3600;
-      await footballBetting.connect(owner).createGame("Team A", "Team B", startTime);
-      
-      // Give users some FootPoints
-      await footballBetting.connect(user1).depositETHForPoints({ value: ethers.parseEther("1") });
-      await footballBetting.connect(user2).depositETHForPoints({ value: ethers.parseEther("1") });
+      // Give users some points first
+      await footballBetting.connect(user1).buyPoints({ value: ethers.parseEther("1") });
+      await footballBetting.connect(user2).buyPoints({ value: ethers.parseEther("1") });
+
+      // Create a match with future start time
+      const currentTime = Math.floor(Date.now() / 1000);
+      const bettingStartTime = currentTime + 300; // 5 minutes from now
+      const bettingEndTime = currentTime + 3600; // 1 hour from now
+      const matchTime = currentTime + 7200; // 2 hours from now
+
+      await footballBetting.connect(owner).createMatch(
+        "Team A",
+        "Team B",
+        "Test Match",
+        bettingStartTime,
+        bettingEndTime,
+        matchTime
+      );
+      matchId = 1;
+
+      // Fast forward time to make betting active
+      await ethers.provider.send("evm_increaseTime", [400]); // Increase time by 400 seconds
+      await ethers.provider.send("evm_mine", []); // Mine a new block
     });
 
     it("Should allow users to place bets", async function () {
       const input = fhevm.createEncryptedInput(await footballBetting.getAddress(), user1Address);
-      input.add32(5); // Bet 5 times
+      input.add8(1); // Bet direction: home win
+      input.add32(5); // Bet count: 5 bets
       const encryptedInput = await input.encrypt();
-      
+
       await expect(
         footballBetting.connect(user1).placeBet(
-          0, // gameId
-          0, // BetType.HOME_WIN
-          encryptedInput.handles[0],
+          matchId,
+          encryptedInput.handles[0], // betDirection
+          encryptedInput.handles[1], // betCount
           encryptedInput.inputProof
         )
       ).to.emit(footballBetting, "BetPlaced")
-        .withArgs(0, user1Address, 0);
-      
-      // Check user's bet amount
-      const userBets = await footballBetting.getUserBets(0, user1Address);
-      const decryptedHomeBets = await fhevm.userDecryptEuint(
+        .withArgs(matchId, user1Address);
+
+      // Check user's bet
+      const userBet = await footballBetting.getUserBet(matchId, user1Address);
+      const decryptedBetAmount = await fhevm.userDecryptEuint(
         FhevmType.euint32,
-        userBets[0],
+        userBet.betAmount,
         await footballBetting.getAddress(),
         user1
       );
-      
-      expect(decryptedHomeBets).to.equal(5);
+
+      expect(decryptedBetAmount).to.equal(5);
     });
 
-    it("Should allow multiple bets from same user", async function () {
+    it("Should not allow duplicate bets from same user", async function () {
       const input1 = fhevm.createEncryptedInput(await footballBetting.getAddress(), user1Address);
-      input1.add32(3); // First bet
+      input1.add8(1); // Bet direction: home win
+      input1.add32(3); // Bet count: 3 bets
       const encryptedInput1 = await input1.encrypt();
-      
-      const input2 = fhevm.createEncryptedInput(await footballBetting.getAddress(), user1Address);
-      input2.add32(2); // Second bet
-      const encryptedInput2 = await input2.encrypt();
-      
-      await footballBetting.connect(user1).placeBet(0, 0, encryptedInput1.handles[0], encryptedInput1.inputProof);
-      await footballBetting.connect(user1).placeBet(0, 0, encryptedInput2.handles[0], encryptedInput2.inputProof);
-      
-      // Check accumulated bet amount
-      const userBets = await footballBetting.getUserBets(0, user1Address);
-      const decryptedHomeBets = await fhevm.userDecryptEuint(
-        FhevmType.euint32,
-        userBets[0],
-        await footballBetting.getAddress(),
-        user1
-      );
-      
-      expect(decryptedHomeBets).to.equal(5); // 3 + 2
-    });
 
-    it("Should not allow betting on closed games", async function () {
-      await footballBetting.connect(owner).closeBetting(0);
-      
-      const input = fhevm.createEncryptedInput(await footballBetting.getAddress(), user1Address);
-      input.add32(5);
-      const encryptedInput = await input.encrypt();
-      
+      // First bet
+      await footballBetting.connect(user1).placeBet(
+        matchId,
+        encryptedInput1.handles[0],
+        encryptedInput1.handles[1],
+        encryptedInput1.inputProof
+      );
+
+      const input2 = fhevm.createEncryptedInput(await footballBetting.getAddress(), user1Address);
+      input2.add8(2); // Bet direction: away win
+      input2.add32(2); // Bet count: 2 bets
+      const encryptedInput2 = await input2.encrypt();
+
+      // Second bet should fail
       await expect(
         footballBetting.connect(user1).placeBet(
-          0,
-          0,
-          encryptedInput.handles[0],
-          encryptedInput.inputProof
+          matchId,
+          encryptedInput2.handles[0],
+          encryptedInput2.handles[1],
+          encryptedInput2.inputProof
         )
-      ).to.be.revertedWith("Betting is closed");
+      ).to.be.revertedWith("Already bet on this match");
     });
 
-    it("Should allow users to retrieve their bet information", async function () {
+    it("Should not allow betting on invalid match", async function () {
       const input = fhevm.createEncryptedInput(await footballBetting.getAddress(), user1Address);
-      input.add32(3); // 3 bets on home win
+      input.add8(1);
+      input.add32(5);
       const encryptedInput = await input.encrypt();
-      
-      await footballBetting.connect(user1).placeBet(0, 0, encryptedInput.handles[0], encryptedInput.inputProof);
-      
-      const userBets = await footballBetting.getUserBets(0, user1Address);
-      const decryptedHomeBets = await fhevm.userDecryptEuint(
-        FhevmType.euint32,
-        userBets[0],
-        await footballBetting.getAddress(),
-        user1
+
+      await expect(
+        footballBetting.connect(user1).placeBet(
+          999, // Invalid match ID
+          encryptedInput.handles[0],
+          encryptedInput.handles[1],
+          encryptedInput.inputProof
+        )
+      ).to.be.revertedWith("Invalid match ID");
+    });
+
+    it("Should not allow betting when betting period has ended", async function () {
+      // Create a match with future times, then fast forward past betting end
+      const currentTime = Math.floor(Date.now() / 1000);
+      const bettingStartTime = currentTime + 300; // 5 minutes from now
+      const bettingEndTime = currentTime + 900; // 15 minutes from now
+      const matchTime = currentTime + 1800; // 30 minutes from now
+
+      await footballBetting.connect(owner).createMatch(
+        "Team C",
+        "Team D",
+        "Ended Match",
+        bettingStartTime,
+        bettingEndTime,
+        matchTime
       );
-      
-      expect(decryptedHomeBets).to.equal(3);
+
+      // Fast forward past betting end time
+      await ethers.provider.send("evm_increaseTime", [1000]); // Increase time by 1000 seconds
+      await ethers.provider.send("evm_mine", []); // Mine a new block
+
+      const input = fhevm.createEncryptedInput(await footballBetting.getAddress(), user1Address);
+      input.add8(1);
+      input.add32(5);
+      const encryptedInput = await input.encrypt();
+
+      await expect(
+        footballBetting.connect(user1).placeBet(
+          2, // New match ID
+          encryptedInput.handles[0],
+          encryptedInput.handles[1],
+          encryptedInput.inputProof
+        )
+      ).to.be.revertedWith("Betting period ended");
+    });
+  });
+
+  describe("Match Finishing and Settlement", function () {
+    let matchId: number;
+
+    beforeEach(async function () {
+      // Give users points first
+      await footballBetting.connect(user1).buyPoints({ value: ethers.parseEther("1") });
+      await footballBetting.connect(user2).buyPoints({ value: ethers.parseEther("1") });
+
+      // Create a match with future times
+      const currentTime = Math.floor(Date.now() / 1000);
+      const bettingStartTime = currentTime + 300; // 5 minutes from now
+      const bettingEndTime = currentTime + 3600; // 1 hour from now
+      const matchTime = currentTime + 7200; // 2 hours from now
+
+      await footballBetting.connect(owner).createMatch(
+        "Team A",
+        "Team B",
+        "Test Match",
+        bettingStartTime,
+        bettingEndTime,
+        matchTime
+      );
+      matchId = 1;
+
+      // Fast forward time to beyond betting end time
+      await ethers.provider.send("evm_increaseTime", [3700]); // Increase time by 3700 seconds (past betting end)
+      await ethers.provider.send("evm_mine", []); // Mine a new block
+    });
+
+    it("Should allow owner to finish match", async function () {
+      await expect(
+        footballBetting.connect(owner).finishMatch(matchId, 1) // Home win
+      ).to.emit(footballBetting, "MatchFinished")
+        .withArgs(matchId, 1);
+
+      const matchInfo = await footballBetting.getMatch(matchId);
+      expect(matchInfo.isFinished).to.be.true;
+      expect(matchInfo.result).to.equal(1);
+    });
+
+    it("Should not allow non-owner to finish match", async function () {
+      await expect(
+        footballBetting.connect(user1).finishMatch(matchId, 1)
+      ).to.be.revertedWith("Only owner can call this function");
+    });
+
+    it("Should not allow finishing match with invalid result", async function () {
+      await expect(
+        footballBetting.connect(owner).finishMatch(matchId, 0) // Invalid result
+      ).to.be.revertedWith("Invalid result: 1=home win, 2=away win, 3=draw");
+
+      await expect(
+        footballBetting.connect(owner).finishMatch(matchId, 4) // Invalid result
+      ).to.be.revertedWith("Invalid result: 1=home win, 2=away win, 3=draw");
+    });
+
+    it("Should not allow finishing match while betting is still open", async function () {
+      // Create a match with ongoing betting (future times)
+      const currentTime = Math.floor(Date.now() / 1000);
+      const bettingStartTime = currentTime + 300; // 5 minutes from now
+      const bettingEndTime = currentTime + 1800; // 30 minutes from now (still open)
+      const matchTime = currentTime + 3600; // 1 hour from now
+
+      await footballBetting.connect(owner).createMatch(
+        "Team C",
+        "Team D",
+        "Ongoing Match",
+        bettingStartTime,
+        bettingEndTime,
+        matchTime
+      );
+
+      // Fast forward to during betting period but before end
+      await ethers.provider.send("evm_increaseTime", [600]); // Increase time by 600 seconds (betting active but not ended)
+      await ethers.provider.send("evm_mine", []); // Mine a new block
+
+      await expect(
+        footballBetting.connect(owner).finishMatch(2, 1)
+      ).to.be.revertedWith("Betting period not ended yet");
     });
   });
 
   describe("Owner Functions", function () {
     beforeEach(async function () {
-      await footballBetting.connect(user1).depositETHForPoints({ value: ethers.parseEther("1") });
+      await footballBetting.connect(user1).buyPoints({ value: ethers.parseEther("1") });
     });
 
-    it("Should allow owner to withdraw ETH", async function () {
-      await expect(() =>
-        footballBetting.connect(owner).withdrawETH()
-      ).to.changeEtherBalance(owner, ethers.parseEther("1"));
+    it("Should allow owner to withdraw contract balance", async function () {
+      const initialBalance = await ethers.provider.getBalance(ownerAddress);
+
+      const tx = await footballBetting.connect(owner).withdraw();
+      const receipt = await tx.wait();
+      const gasUsed = receipt!.gasUsed * receipt!.gasPrice;
+
+      const finalBalance = await ethers.provider.getBalance(ownerAddress);
+      const expectedBalance = initialBalance + ethers.parseEther("1") - gasUsed;
+
+      expect(finalBalance).to.be.closeTo(expectedBalance, ethers.parseEther("0.01"));
     });
 
-    it("Should not allow non-owner to withdraw ETH", async function () {
+    it("Should not allow non-owner to withdraw", async function () {
       await expect(
-        footballBetting.connect(user1).withdrawETH()
+        footballBetting.connect(user1).withdraw()
       ).to.be.revertedWith("Only owner can call this function");
+    });
+
+    it("Should revert withdrawal when no balance", async function () {
+      // First withdraw all balance
+      await footballBetting.connect(owner).withdraw();
+
+      // Try to withdraw again
+      await expect(
+        footballBetting.connect(owner).withdraw()
+      ).to.be.revertedWith("No balance to withdraw");
+    });
+  });
+
+  describe("View Functions", function () {
+    let matchId: number;
+
+    beforeEach(async function () {
+      const currentTime = Math.floor(Date.now() / 1000);
+      await footballBetting.connect(owner).createMatch(
+        "Team A",
+        "Team B",
+        "Test Match",
+        currentTime + 3600,
+        currentTime + 7200,
+        currentTime + 10800
+      );
+      matchId = 1;
+
+      await footballBetting.connect(user1).buyPoints({ value: ethers.parseEther("1") });
+    });
+
+    it("Should return user points", async function () {
+      const encryptedPoints = await footballBetting.getUserPoints(user1Address);
+      const decryptedPoints = await fhevm.userDecryptEuint(
+        FhevmType.euint32,
+        encryptedPoints,
+        await footballBetting.getAddress(),
+        user1
+      );
+
+      expect(decryptedPoints).to.equal(100000);
+    });
+
+    it("Should return match information", async function () {
+      const matchInfo = await footballBetting.getMatch(matchId);
+      expect(matchInfo.homeTeam).to.equal("Team A");
+      expect(matchInfo.awayTeam).to.equal("Team B");
+      expect(matchInfo.matchName).to.equal("Test Match");
+      expect(matchInfo.isActive).to.be.true;
+      expect(matchInfo.isFinished).to.be.false;
+    });
+
+    it("Should return match betting statistics", async function () {
+      const matchBets = await footballBetting.getMatchBets(matchId);
+      expect(matchBets.isTotalDecrypted).to.be.false;
+      expect(matchBets.decryptedTotalBetAmount).to.equal(0);
+    });
+
+    it("Should return user bet information", async function () {
+      const userBet = await footballBetting.getUserBet(matchId, user1Address);
+      expect(userBet.hasSettled).to.be.false;
+      expect(userBet.isDecrypted).to.be.false;
     });
   });
 });
