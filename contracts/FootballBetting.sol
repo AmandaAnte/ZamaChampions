@@ -19,6 +19,7 @@ contract FootballBetting is SepoliaConfig {
         uint256 bettingStartTime;
         uint256 bettingEndTime;
         uint256 matchTime;
+        address creator; // Address of the match creator
         bool isActive;
         bool isFinished;
         uint8 result; // 1: home win, 2: away win, 3: draw, 0: not finished
@@ -71,7 +72,13 @@ contract FootballBetting is SepoliaConfig {
 
     // Events
     event PointsPurchased(address indexed user, uint256 ethAmount, uint256 pointsAmount);
-    event MatchCreated(uint256 indexed matchId, string homeTeam, string awayTeam, string matchName);
+    event MatchCreated(
+        uint256 indexed matchId,
+        address indexed creator,
+        string homeTeam,
+        string awayTeam,
+        string matchName
+    );
     event BetPlaced(uint256 indexed matchId, address indexed user);
     event MatchFinished(uint256 indexed matchId, uint8 result);
     event BetSettled(uint256 indexed matchId, address indexed user, uint256 winAmount);
@@ -87,6 +94,11 @@ contract FootballBetting is SepoliaConfig {
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
+        _;
+    }
+
+    modifier onlyMatchCreator(uint256 matchId) {
+        require(msg.sender == matches[matchId].creator, "Only match creator can call this function");
         _;
     }
 
@@ -138,7 +150,7 @@ contract FootballBetting is SepoliaConfig {
         uint256 bettingStartTime,
         uint256 bettingEndTime,
         uint256 matchTime
-    ) external onlyOwner {
+    ) external {
         require(bettingStartTime < bettingEndTime, "Invalid betting time range");
         // require(bettingEndTime < matchTime, "Match time must be after betting end time");
         require(bettingStartTime > block.timestamp, "Betting start time must be in future");
@@ -153,6 +165,7 @@ contract FootballBetting is SepoliaConfig {
             bettingStartTime: bettingStartTime,
             bettingEndTime: bettingEndTime,
             matchTime: matchTime,
+            creator: msg.sender,
             isActive: true,
             isFinished: false,
             result: 0,
@@ -178,7 +191,7 @@ contract FootballBetting is SepoliaConfig {
         FHE.allowThis(matchBets[matchCounter].drawTotal);
         FHE.allowThis(matchBets[matchCounter].totalBetAmount);
 
-        emit MatchCreated(matchCounter, homeTeam, awayTeam, matchName);
+        emit MatchCreated(matchCounter, msg.sender, homeTeam, awayTeam, matchName);
     }
 
     // User place bet
@@ -251,8 +264,8 @@ contract FootballBetting is SepoliaConfig {
         emit BetPlaced(matchId, msg.sender);
     }
 
-    // Project owner finishes match and inputs result
-    function finishMatch(uint256 matchId, uint8 result) external onlyOwner validMatch(matchId) {
+    // Match creator finishes match and inputs result
+    function finishMatch(uint256 matchId, uint8 result) external onlyMatchCreator(matchId) validMatch(matchId) {
         require(result >= 1 && result <= 3, "Invalid result: 1=home win, 2=away win, 3=draw");
         require(block.timestamp > matches[matchId].bettingEndTime, "Betting period not ended yet");
         require(!matches[matchId].isFinished, "Match already finished");
