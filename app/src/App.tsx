@@ -13,25 +13,25 @@ function App() {
   const { useOwner } = useFootballBettingContract()
   const { data: owner } = useOwner()
   const [fhevmInitialized, setFhevmInitialized] = useState(false)
+  const [fhevmInitializing, setFhevmInitializing] = useState(false)
   const [activeTab, setActiveTab] = useState<'matches' | 'admin' | 'dashboard'>('matches')
 
   const isOwner = address && owner && address.toLowerCase() === owner.toLowerCase()
 
-  useEffect(() => {
-    const initializeFHEVM = async () => {
-      try {
-        await initFHEVM()
-        setFhevmInitialized(true)
-        console.log('FHEVM initialized successfully')
-      } catch (error) {
-        console.error('Failed to initialize FHEVM:', error)
-      }
-    }
+  const handleInitFHEVM = async () => {
+    if (fhevmInitialized || fhevmInitializing) return
 
-    if (isConnected) {
-      initializeFHEVM()
+    setFhevmInitializing(true)
+    try {
+      await initFHEVM()
+      setFhevmInitialized(true)
+      console.log('FHEVM initialized successfully')
+    } catch (error) {
+      console.error('Failed to initialize FHEVM:', error)
+    } finally {
+      setFhevmInitializing(false)
     }
-  }, [isConnected])
+  }
 
   if (!isConnected) {
     return (
@@ -51,8 +51,33 @@ function App() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="loading mb-4"></div>
-          <p>Initializing FHE environment...</p>
+          <h1 className="text-4xl font-bold mb-8">Champion Betting</h1>
+          <p className="text-lg mb-8 text-gray">
+            FHE-powered Encrypted Football Betting Platform
+          </p>
+          <div className="mb-8">
+            <ConnectButton />
+          </div>
+          <div className="bg-gray-100 p-6 rounded-lg max-w-md mx-auto">
+            <h2 className="text-xl font-semibold mb-4">Initialize FHE</h2>
+            <p className="text-gray-600 mb-6">
+              Click the button below to initialize the Fully Homomorphic Encryption environment for secure betting.
+            </p>
+            <button
+              onClick={handleInitFHEVM}
+              disabled={fhevmInitializing}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+            >
+              {fhevmInitializing ? (
+                <div className="flex items-center justify-center">
+                  <div className="loading-spinner mr-2"></div>
+                  Initializing FHE...
+                </div>
+              ) : (
+                'Initialize FHE'
+              )}
+            </button>
+          </div>
         </div>
       </div>
     )
