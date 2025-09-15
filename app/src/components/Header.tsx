@@ -50,7 +50,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, isOwner, fhevm
                 {fhevmInitializing ? (
                   <>
                     <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                    Initializing...
+                    Initializing....
                   </>
                 ) : (
                   <>
