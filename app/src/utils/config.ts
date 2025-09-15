@@ -12,7 +12,7 @@ export const config = getDefaultConfig({
 })
 
 // Contract addresses - update these after deployment
-export const CONTRACT_ADDRESS = '0x66CFeA6126102918B4533Aaad9bf64beea3460A1' as const
+export const CONTRACT_ADDRESS = '0x213A77814E8eA376D724408477A2B6f8A8871733' as const
 
 // Zama FHE configuration for Sepolia
 export const FHEVM_CONFIG = {

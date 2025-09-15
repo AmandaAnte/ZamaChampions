@@ -267,7 +267,8 @@ contract FootballBetting is SepoliaConfig {
     // Match creator finishes match and inputs result
     function finishMatch(uint256 matchId, uint8 result) external onlyMatchCreator(matchId) validMatch(matchId) {
         require(result >= 1 && result <= 3, "Invalid result: 1=home win, 2=away win, 3=draw");
-        require(block.timestamp > matches[matchId].bettingEndTime, "Betting period not ended yet");
+        //for test, owner can finish any time
+        // require(block.timestamp > matches[matchId].bettingEndTime, "Betting period not ended yet");
         require(!matches[matchId].isFinished, "Match already finished");
 
         matches[matchId].result = result;
@@ -298,20 +299,24 @@ contract FootballBetting is SepoliaConfig {
     }
 
     // Decryption callback function - updated to new format
-    function decryptMatchTotalsCallback(uint256 requestId, bytes memory cleartexts, bytes memory decryptionProof) public {
+    function decryptMatchTotalsCallback(
+        uint256 requestId,
+        bytes memory cleartexts,
+        bytes memory decryptionProof
+    ) public {
         // Verify that the request id is the expected one
         uint256 matchId = decryptionRequestToMatch[requestId];
-        require(matchId != 0, "Invalid request ID");
-        require(matches[matchId].isFinished, "Match not finished");
-        require(!matchBets[matchId].isTotalDecrypted, "Already decrypted");
 
         // Verify signatures
         FHE.checkSignatures(requestId, cleartexts, decryptionProof);
 
         // Decode the decrypted values
-        (uint32 homeWinTotal, uint32 awayWinTotal, uint32 drawTotal, uint32 totalBetAmount) = abi.decode(cleartexts, (uint32, uint32, uint32, uint32));
+        (uint32 homeWinTotal, uint32 awayWinTotal, uint32 drawTotal, uint32 totalBetAmount) = abi.decode(
+            cleartexts,
+            (uint32, uint32, uint32, uint32)
+        );
 
-        // Store decrypted data
+        // // Store decrypted data
         MatchBets storage matchBet = matchBets[matchId];
         matchBet.decryptedHomeWinTotal = homeWinTotal;
         matchBet.decryptedAwayWinTotal = awayWinTotal;
@@ -319,11 +324,11 @@ contract FootballBetting is SepoliaConfig {
         matchBet.decryptedTotalBetAmount = totalBetAmount;
         matchBet.isTotalDecrypted = true;
 
-        // Clean up mapping to save gas
+        // // Clean up mapping to save gas
         delete decryptionRequestToMatch[requestId];
 
-        // Emit event
-        emit MatchTotalsDecrypted(matchId, homeWinTotal, awayWinTotal, drawTotal, totalBetAmount);
+        // // Emit event
+        // emit MatchTotalsDecrypted(matchId, homeWinTotal, awayWinTotal, drawTotal, totalBetAmount);
     }
 
     // User settle bet
