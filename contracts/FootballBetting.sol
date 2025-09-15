@@ -297,23 +297,19 @@ contract FootballBetting is SepoliaConfig {
         emit DecryptionRequested(matchId);
     }
 
-    // Decryption callback function - complete implementation
-    function decryptMatchTotalsCallback(
-        uint256 requestId,
-        uint32 homeWinTotal,
-        uint32 awayWinTotal,
-        uint32 drawTotal,
-        uint32 totalBetAmount,
-        bytes[] memory signatures
-    ) public {
-        // Verify signatures
-        FHE.checkSignatures(requestId, signatures);
-
-        // Get corresponding match ID
+    // Decryption callback function - updated to new format
+    function decryptMatchTotalsCallback(uint256 requestId, bytes memory cleartexts, bytes memory decryptionProof) public {
+        // Verify that the request id is the expected one
         uint256 matchId = decryptionRequestToMatch[requestId];
         require(matchId != 0, "Invalid request ID");
         require(matches[matchId].isFinished, "Match not finished");
         require(!matchBets[matchId].isTotalDecrypted, "Already decrypted");
+
+        // Verify signatures
+        FHE.checkSignatures(requestId, cleartexts, decryptionProof);
+
+        // Decode the decrypted values
+        (uint32 homeWinTotal, uint32 awayWinTotal, uint32 drawTotal, uint32 totalBetAmount) = abi.decode(cleartexts, (uint32, uint32, uint32, uint32));
 
         // Store decrypted data
         MatchBets storage matchBet = matchBets[matchId];
@@ -352,15 +348,8 @@ contract FootballBetting is SepoliaConfig {
         emit UserDecryptionRequested(matchId, msg.sender);
     }
 
-    // User bet decryption callback function
-    function decryptUserBetCallback(
-        uint256 requestId,
-        uint8 betDirection,
-        uint32 betAmount,
-        bytes[] memory signatures
-    ) public {
-        FHE.checkSignatures(requestId, signatures);
-
+    // User bet decryption callback function - updated to new format
+    function decryptUserBetCallback(uint256 requestId, bytes memory cleartexts, bytes memory decryptionProof) public {
         // Get user and match info from mapping
         UserBetRequest memory request = userBetDecryptionRequests[requestId];
         require(request.user != address(0), "Invalid request ID");
@@ -375,6 +364,12 @@ contract FootballBetting is SepoliaConfig {
         require(FHE.isInitialized(userBet.betDirection), "No bet found");
         require(!userBet.hasSettled, "Already settled!");
         require(!userBet.isDecrypted, "Already decrypted");
+
+        // Verify signatures
+        FHE.checkSignatures(requestId, cleartexts, decryptionProof);
+
+        // Decode the decrypted values
+        (uint8 betDirection, uint32 betAmount) = abi.decode(cleartexts, (uint8, uint32));
 
         // Check if won
         uint8 matchResult = matches[matchId].result;
