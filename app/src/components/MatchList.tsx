@@ -171,10 +171,11 @@ const MatchList: React.FC = () => {
       {success && <div className="success">{success}</div>}
 
       <div className="grid grid-2">
-        {matches.map((match) => (
+        {matches.map((match, index) => (
           <MatchCard
             key={match.id.toString()}
             matchId={match.id}
+            matchIndex={index + 1}
             selectedMatch={selectedMatch}
             setSelectedMatch={setSelectedMatch}
             betDirection={betDirection}
@@ -193,6 +194,7 @@ const MatchList: React.FC = () => {
       {showBettingModal && currentMatchForBetting && (
         <BettingModal
           matchId={currentMatchForBetting}
+          matchIndex={matches.findIndex(m => m.id === currentMatchForBetting) + 1}
           betDirection={betDirection}
           setBetDirection={setBetDirection}
           betCount={betCount}
@@ -209,6 +211,7 @@ const MatchList: React.FC = () => {
 // Individual match card component
 const MatchCard: React.FC<{
   matchId: bigint
+  matchIndex: number
   selectedMatch: bigint | null
   setSelectedMatch: (id: bigint | null) => void
   betDirection: BetDirection
@@ -221,6 +224,7 @@ const MatchCard: React.FC<{
   isWritePending: boolean
 }> = ({
   matchId,
+  matchIndex,
   selectedMatch,
   setSelectedMatch,
   betDirection,
@@ -294,9 +298,12 @@ const MatchCard: React.FC<{
     return (
       <div className="match-card card">
         {/* Header with title and status */}
-        <div className="flex justify-between items-start mb-4">
-          <h3 className="match-title">{match.matchName}</h3>
-          <span className={`status-badge ${getStatusClass(status)}`}>
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <div className="text-xs text-gray" style={{ marginBottom: '0.25rem' }}>Match {matchIndex}</div>
+            <h3 className="match-title">{match.matchName}</h3>
+          </div>
+          <span className={`status-badge ${getStatusClass(status)}`} style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
             {getStatusText(status)}
           </span>
         </div>
@@ -391,7 +398,8 @@ const MatchCard: React.FC<{
           </p> */}
           {canBet ? (
             <button
-              className="button w-full"
+              className="button"
+              style={{ width: '100%' }}
               onClick={() => {
                 console.log('=== Betting button clicked ===')
                 console.log('Opening modal for matchId:', matchId)
@@ -413,7 +421,8 @@ const MatchCard: React.FC<{
         {/* Settlement button */}
         {canSettle && (
           <button
-            className="button button-secondary w-full"
+            className="button button-secondary"
+            style={{ width: '100%' }}
             onClick={() => onSettleBet(matchId)}
             disabled={isWritePending}
           >
@@ -434,6 +443,7 @@ const MatchCard: React.FC<{
 // Betting modal component
 const BettingModal: React.FC<{
   matchId: bigint
+  matchIndex: number
   betDirection: BetDirection
   setBetDirection: (direction: BetDirection) => void
   betCount: string
@@ -443,6 +453,7 @@ const BettingModal: React.FC<{
   isWritePending: boolean
 }> = ({
   matchId,
+  matchIndex,
   betDirection,
   setBetDirection,
   betCount,
@@ -460,13 +471,16 @@ const BettingModal: React.FC<{
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal-content" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
-            <h3>Place Bet - {match.matchName}</h3>
+            <div>
+              <div className="text-xs text-gray" style={{ marginBottom: '0.25rem' }}>Match {matchIndex}</div>
+              <h3>Place Bet - {match.matchName}</h3>
+            </div>
             <button className="modal-close" onClick={onClose}>×</button>
           </div>
 
           <div className="modal-body">
             <div className="text-center mb-4">
-              <div className="text-lg font-bold">
+              <div style={{ fontSize: '1.125rem', fontWeight: 'bold' }}>
                 {match.homeTeam} vs {match.awayTeam}
               </div>
             </div>
@@ -475,24 +489,24 @@ const BettingModal: React.FC<{
               <label className="form-label">Select Bet Direction</label>
               <div className="flex gap-3 mb-4">
                 <div
-                  className={`bet-option flex-1 ${betDirection === BetDirection.HomeWin ? 'selected' : ''}`}
+                  className={`bet-option ${betDirection === BetDirection.HomeWin ? 'selected' : ''}`}
                   onClick={() => setBetDirection(BetDirection.HomeWin)}
                 >
-                  <div className="font-bold">Home Win</div>
+                  <div style={{ fontWeight: 'bold' }}>Home Win</div>
                   <div className="text-sm">{match.homeTeam}</div>
                 </div>
                 <div
-                  className={`bet-option flex-1 ${betDirection === BetDirection.AwayWin ? 'selected' : ''}`}
+                  className={`bet-option ${betDirection === BetDirection.AwayWin ? 'selected' : ''}`}
                   onClick={() => setBetDirection(BetDirection.AwayWin)}
                 >
-                  <div className="font-bold">Away Win</div>
+                  <div style={{ fontWeight: 'bold' }}>Away Win</div>
                   <div className="text-sm">{match.awayTeam}</div>
                 </div>
                 <div
-                  className={`bet-option flex-1 ${betDirection === BetDirection.Draw ? 'selected' : ''}`}
+                  className={`bet-option ${betDirection === BetDirection.Draw ? 'selected' : ''}`}
                   onClick={() => setBetDirection(BetDirection.Draw)}
                 >
-                  <div className="font-bold">Draw</div>
+                  <div style={{ fontWeight: 'bold' }}>Draw</div>
                   <div className="text-sm">Draw</div>
                 </div>
               </div>
@@ -517,7 +531,8 @@ const BettingModal: React.FC<{
           <div className="modal-footer">
             <div className="flex gap-2">
               <button
-                className="button flex-1"
+                className="button"
+                style={{ flex: 1 }}
                 onClick={() => {
                   console.log('=== Modal confirm bet ===')
                   console.log('matchId:', matchId)
