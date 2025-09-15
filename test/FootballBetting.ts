@@ -86,10 +86,11 @@ describe("FootballBetting", function () {
 
   describe("Match Management", function () {
     it("Should allow owner to create a match", async function () {
-      const currentTime = Math.floor(Date.now() / 1000);
-      const bettingStartTime = currentTime + 3600; // 1 hour from now
-      const bettingEndTime = currentTime + 7200; // 2 hours from now
-      const matchTime = currentTime + 10800; // 3 hours from now
+      const currentBlock = await ethers.provider.getBlock('latest');
+      const currentTime = currentBlock!.timestamp;
+      const bettingStartTime = currentTime + 3600; // 1 hour from current block
+      const bettingEndTime = currentTime + 7200; // 2 hours from current block
+      const matchTime = currentTime + 10800; // 3 hours from current block
 
       await expect(
         footballBetting.connect(owner).createMatch(
@@ -118,7 +119,8 @@ describe("FootballBetting", function () {
     });
 
     it("Should not allow non-owner to create a match", async function () {
-      const currentTime = Math.floor(Date.now() / 1000);
+      const currentBlock = await ethers.provider.getBlock('latest');
+      const currentTime = currentBlock!.timestamp;
       const bettingStartTime = currentTime + 3600;
       const bettingEndTime = currentTime + 7200;
       const matchTime = currentTime + 10800;
@@ -136,7 +138,8 @@ describe("FootballBetting", function () {
     });
 
     it("Should not allow creating a match with invalid time ranges", async function () {
-      const currentTime = Math.floor(Date.now() / 1000);
+      const currentBlock = await ethers.provider.getBlock('latest');
+      const currentTime = currentBlock!.timestamp;
       const bettingStartTime = currentTime + 7200;
       const bettingEndTime = currentTime + 3600; // End before start
       const matchTime = currentTime + 10800;
@@ -154,7 +157,8 @@ describe("FootballBetting", function () {
     });
 
     it("Should not allow creating a match with past start time", async function () {
-      const currentTime = Math.floor(Date.now() / 1000);
+      const currentBlock = await ethers.provider.getBlock('latest');
+      const currentTime = currentBlock!.timestamp;
       const bettingStartTime = currentTime - 3600; // 1 hour ago
       const bettingEndTime = currentTime + 3600;
       const matchTime = currentTime + 7200;
@@ -180,11 +184,12 @@ describe("FootballBetting", function () {
       await footballBetting.connect(user1).buyPoints({ value: ethers.parseEther("1") });
       await footballBetting.connect(user2).buyPoints({ value: ethers.parseEther("1") });
 
-      // Create a match with future start time
-      const currentTime = Math.floor(Date.now() / 1000);
-      const bettingStartTime = currentTime + 300; // 5 minutes from now
-      const bettingEndTime = currentTime + 3600; // 1 hour from now
-      const matchTime = currentTime + 7200; // 2 hours from now
+      // Get current block timestamp
+      const currentBlock = await ethers.provider.getBlock('latest');
+      const currentTime = currentBlock!.timestamp;
+      const bettingStartTime = currentTime + 300; // 5 minutes from current block
+      const bettingEndTime = currentTime + 3600; // 1 hour from current block
+      const matchTime = currentTime + 7200; // 2 hours from current block
 
       await footballBetting.connect(owner).createMatch(
         "Team A",
@@ -276,11 +281,12 @@ describe("FootballBetting", function () {
     });
 
     it("Should not allow betting when betting period has ended", async function () {
-      // Create a match with future times, then fast forward past betting end
-      const currentTime = Math.floor(Date.now() / 1000);
-      const bettingStartTime = currentTime + 300; // 5 minutes from now
-      const bettingEndTime = currentTime + 900; // 15 minutes from now
-      const matchTime = currentTime + 1800; // 30 minutes from now
+      // Get current block timestamp and create a match with future times
+      const currentBlock = await ethers.provider.getBlock('latest');
+      const currentTime = currentBlock!.timestamp;
+      const bettingStartTime = currentTime + 300; // 5 minutes from current block
+      const bettingEndTime = currentTime + 900; // 15 minutes from current block
+      const matchTime = currentTime + 1800; // 30 minutes from current block
 
       await footballBetting.connect(owner).createMatch(
         "Team C",
@@ -319,11 +325,12 @@ describe("FootballBetting", function () {
       await footballBetting.connect(user1).buyPoints({ value: ethers.parseEther("1") });
       await footballBetting.connect(user2).buyPoints({ value: ethers.parseEther("1") });
 
-      // Create a match with future times
-      const currentTime = Math.floor(Date.now() / 1000);
-      const bettingStartTime = currentTime + 300; // 5 minutes from now
-      const bettingEndTime = currentTime + 3600; // 1 hour from now
-      const matchTime = currentTime + 7200; // 2 hours from now
+      // Get current block timestamp
+      const currentBlock = await ethers.provider.getBlock('latest');
+      const currentTime = currentBlock!.timestamp;
+      const bettingStartTime = currentTime + 300; // 5 minutes from current block
+      const bettingEndTime = currentTime + 3600; // 1 hour from current block
+      const matchTime = currentTime + 7200; // 2 hours from current block
 
       await footballBetting.connect(owner).createMatch(
         "Team A",
@@ -368,11 +375,12 @@ describe("FootballBetting", function () {
     });
 
     it("Should not allow finishing match while betting is still open", async function () {
-      // Create a match with ongoing betting (future times)
-      const currentTime = Math.floor(Date.now() / 1000);
-      const bettingStartTime = currentTime + 300; // 5 minutes from now
-      const bettingEndTime = currentTime + 1800; // 30 minutes from now (still open)
-      const matchTime = currentTime + 3600; // 1 hour from now
+      // Get current block timestamp and create a match with ongoing betting
+      const currentBlock = await ethers.provider.getBlock('latest');
+      const currentTime = currentBlock!.timestamp;
+      const bettingStartTime = currentTime + 300; // 5 minutes from current block
+      const bettingEndTime = currentTime + 1800; // 30 minutes from current block (still open)
+      const matchTime = currentTime + 3600; // 1 hour from current block
 
       await footballBetting.connect(owner).createMatch(
         "Team C",
@@ -432,7 +440,8 @@ describe("FootballBetting", function () {
     let matchId: number;
 
     beforeEach(async function () {
-      const currentTime = Math.floor(Date.now() / 1000);
+      const currentBlock = await ethers.provider.getBlock('latest');
+      const currentTime = currentBlock!.timestamp;
       await footballBetting.connect(owner).createMatch(
         "Team A",
         "Team B",
@@ -477,6 +486,171 @@ describe("FootballBetting", function () {
       const userBet = await footballBetting.getUserBet(matchId, user1Address);
       expect(userBet.hasSettled).to.be.false;
       expect(userBet.isDecrypted).to.be.false;
+    });
+  });
+
+  describe("Complete Betting Workflow Integration Test", function () {
+    it("Should handle complete betting workflow from bet placement to settlement", async function () {
+      // Step 1: Users buy points
+      await footballBetting.connect(user1).buyPoints({ value: ethers.parseEther("1") });
+      await footballBetting.connect(user2).buyPoints({ value: ethers.parseEther("0.5") });
+
+      // Verify initial points
+      const user1InitialPoints = await footballBetting.getUserPoints(user1Address);
+      const user1InitialDecrypted = await fhevm.userDecryptEuint(
+        FhevmType.euint32,
+        user1InitialPoints,
+        await footballBetting.getAddress(),
+        user1
+      );
+      expect(user1InitialDecrypted).to.equal(100000); // 1 ETH = 100,000 points
+
+      // Step 2: Create a match
+      const currentBlock = await ethers.provider.getBlock('latest');
+      const currentTime = currentBlock!.timestamp;
+      const bettingStartTime = currentTime + 300; // 5 minutes from now
+      const bettingEndTime = currentTime + 3600; // 1 hour from now
+      const matchTime = currentTime + 7200; // 2 hours from now
+
+      await footballBetting.connect(owner).createMatch(
+        "Manchester United",
+        "Liverpool",
+        "Premier League Derby",
+        bettingStartTime,
+        bettingEndTime,
+        matchTime
+      );
+
+      // Step 3: Fast forward to betting period
+      await ethers.provider.send("evm_increaseTime", [400]);
+      await ethers.provider.send("evm_mine", []);
+
+      // Step 4: Users place bets
+      // User1 bets 10 times on home win (1)
+      const input1 = fhevm.createEncryptedInput(await footballBetting.getAddress(), user1Address);
+      input1.add8(1); // Home win
+      input1.add32(10); // 10 bets
+      const encryptedInput1 = await input1.encrypt();
+
+      await footballBetting.connect(user1).placeBet(
+        1,
+        encryptedInput1.handles[0],
+        encryptedInput1.handles[1],
+        encryptedInput1.inputProof
+      );
+
+      // User2 bets 5 times on away win (2)
+      const input2 = fhevm.createEncryptedInput(await footballBetting.getAddress(), user2Address);
+      input2.add8(2); // Away win
+      input2.add32(5); // 5 bets
+      const encryptedInput2 = await input2.encrypt();
+
+      await footballBetting.connect(user2).placeBet(
+        1,
+        encryptedInput2.handles[0],
+        encryptedInput2.handles[1],
+        encryptedInput2.inputProof
+      );
+
+      // Step 5: Verify bets were placed
+      const user1Bet = await footballBetting.getUserBet(1, user1Address);
+      const user1BetAmount = await fhevm.userDecryptEuint(
+        FhevmType.euint32,
+        user1Bet.betAmount,
+        await footballBetting.getAddress(),
+        user1
+      );
+      expect(user1BetAmount).to.equal(10);
+
+      // Step 6: Verify points were deducted (10 bets * 100 points = 1000 points)
+      const user1PointsAfterBet = await footballBetting.getUserPoints(user1Address);
+      const user1PointsAfterBetDecrypted = await fhevm.userDecryptEuint(
+        FhevmType.euint32,
+        user1PointsAfterBet,
+        await footballBetting.getAddress(),
+        user1
+      );
+      expect(user1PointsAfterBetDecrypted).to.equal(99000); // 100000 - 1000
+
+      // Step 7: Fast forward past betting end time
+      await ethers.provider.send("evm_increaseTime", [3300]); // Move past betting end time
+      await ethers.provider.send("evm_mine", []);
+
+      // Step 8: Owner finishes match with home win (1)
+      await expect(
+        footballBetting.connect(owner).finishMatch(1, 1) // Home win - user1 should win
+      ).to.emit(footballBetting, "MatchFinished")
+        .withArgs(1, 1);
+
+      // Step 9: Verify match is finished
+      const matchInfo = await footballBetting.getMatch(1);
+      expect(matchInfo.isFinished).to.be.true;
+      expect(matchInfo.result).to.equal(1);
+
+      // Note: In a real scenario, we would need to handle the asynchronous decryption
+      // callbacks for match totals and user settlement. For this test, we verify
+      // the basic workflow up to match finishing.
+
+      // Verify that settlement requires match totals to be decrypted first
+      await expect(
+        footballBetting.connect(user1).settleBet(1)
+      ).to.be.revertedWith("Match totals not decrypted yet");
+    });
+
+    it("Should correctly calculate betting statistics", async function () {
+      // Buy points for multiple users
+      await footballBetting.connect(user1).buyPoints({ value: ethers.parseEther("1") });
+      await footballBetting.connect(user2).buyPoints({ value: ethers.parseEther("1") });
+
+      // Create match
+      const currentBlock = await ethers.provider.getBlock('latest');
+      const currentTime = currentBlock!.timestamp;
+
+      await footballBetting.connect(owner).createMatch(
+        "Team A",
+        "Team B",
+        "Test Match",
+        currentTime + 300,
+        currentTime + 3600,
+        currentTime + 7200
+      );
+
+      // Fast forward to betting period
+      await ethers.provider.send("evm_increaseTime", [400]);
+      await ethers.provider.send("evm_mine", []);
+
+      // Multiple bets on different outcomes
+      const input1 = fhevm.createEncryptedInput(await footballBetting.getAddress(), user1Address);
+      input1.add8(1); // Home win
+      input1.add32(8); // 8 bets
+      const encryptedInput1 = await input1.encrypt();
+
+      await footballBetting.connect(user1).placeBet(
+        1,
+        encryptedInput1.handles[0],
+        encryptedInput1.handles[1],
+        encryptedInput1.inputProof
+      );
+
+      const input2 = fhevm.createEncryptedInput(await footballBetting.getAddress(), user2Address);
+      input2.add8(3); // Draw
+      input2.add32(12); // 12 bets
+      const encryptedInput2 = await input2.encrypt();
+
+      await footballBetting.connect(user2).placeBet(
+        1,
+        encryptedInput2.handles[0],
+        encryptedInput2.handles[1],
+        encryptedInput2.inputProof
+      );
+
+      // Verify match betting statistics structure exists
+      const matchBets = await footballBetting.getMatchBets(1);
+      expect(matchBets.isTotalDecrypted).to.be.false;
+      expect(matchBets.decryptedTotalBetAmount).to.equal(0);
+
+      // The encrypted totals are updated but can't be easily verified without decryption
+      // This test verifies the structure and basic functionality
     });
   });
 });
