@@ -1,4 +1,4 @@
-export const FOOTBALL_BETTING_ABI = 
+export const FOOTBALL_BETTING_ABI =
 [
   {
     "inputs": [],
@@ -103,6 +103,12 @@ export const FOOTBALL_BETTING_ABI =
         "internalType": "uint256",
         "name": "matchId",
         "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "creator",
+        "type": "address"
       },
       {
         "indexed": false,
@@ -429,6 +435,11 @@ export const FOOTBALL_BETTING_ABI =
             "type": "uint256"
           },
           {
+            "internalType": "address",
+            "name": "creator",
+            "type": "address"
+          },
+          {
             "internalType": "bool",
             "name": "isActive",
             "type": "bool"
@@ -704,6 +715,11 @@ export const FOOTBALL_BETTING_ABI =
         "internalType": "uint256",
         "name": "matchTime",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "creator",
+        "type": "address"
       },
       {
         "internalType": "bool",

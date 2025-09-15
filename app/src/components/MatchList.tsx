@@ -15,7 +15,7 @@ const MatchList: React.FC = () => {
     isWritePending
   } = useFootballBettingContract()
 
-  const { data: matchCounter } = useMatchCounter()
+  const { data: matchCounter, isLoading: matchCounterLoading, error: matchCounterError } = useMatchCounter()
   const [matches, setMatches] = useState<any[]>([])
   const [selectedMatch, setSelectedMatch] = useState<bigint | null>(null)
   const [showBettingModal, setShowBettingModal] = useState(false)
@@ -37,10 +37,6 @@ const MatchList: React.FC = () => {
     setMatches(matchIds.map(id => ({ id })))
   }, [matchCounter])
 
-  // Monitor selectedMatch state changes
-  useEffect(() => {
-    console.log('=== selectedMatch state change ===', selectedMatch)
-  }, [selectedMatch])
 
   const openBettingModal = (matchId: bigint) => {
     setCurrentMatchForBetting(matchId)
@@ -133,6 +129,29 @@ const MatchList: React.FC = () => {
     }
   }
 
+  if (matchCounterLoading) {
+    return (
+      <div>
+        <h1 className="text-3xl font-bold mb-6">Match List</h1>
+        <div className="card text-center">
+          <p className="text-gray">Loading matches...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (matchCounterError) {
+    return (
+      <div>
+        <h1 className="text-3xl font-bold mb-6">Match List</h1>
+        <div className="card text-center">
+          <p className="text-red-600">Error loading matches: {matchCounterError.message}</p>
+          <p className="text-sm text-gray">Contract Address: {CONTRACT_ADDRESS}</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!matchCounter || Number(matchCounter) === 0) {
     return (
       <div>
@@ -216,11 +235,14 @@ const MatchCard: React.FC<{
     const { address } = useAccount()
     const { useGetMatch, useGetMatchBets, useGetUserBet } = useFootballBettingContract()
 
-    const { data: match } = useGetMatch(matchId)
+    const { data: match, isLoading: matchLoading, error: matchError } = useGetMatch(matchId)
     const { data: matchBets } = useGetMatchBets(matchId)
     const { data: userBet } = useGetUserBet(matchId, address as `0x${string}`)
 
-    if (!match) return <div className="card">Loading...</div>
+
+    if (matchLoading) return <div className="card">Loading match {matchId.toString()}...</div>
+    if (matchError) return <div className="card">Error loading match: {matchError.message}</div>
+    if (!match) return <div className="card">No match data for ID {matchId.toString()}</div>
 
     // Helper functions
     const getMatchStatus = (match: any) => {

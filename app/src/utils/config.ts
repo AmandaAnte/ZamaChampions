@@ -32,7 +32,7 @@ export const BET_UNIT = 100
 
 // Betting directions
 export enum BetDirection {
-  HOME_WIN = 1,
-  AWAY_WIN = 2,
-  DRAW = 3,
+  HomeWin = 1,
+  AwayWin = 2,
+  Draw = 3,
 }

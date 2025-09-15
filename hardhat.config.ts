@@ -14,6 +14,7 @@ dotenv.config();
 import "./tasks/accounts";
 import "./tasks/FHECounter";
 import "./tasks/FootballBetting";
+import "./tasks/testContract";
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
 const INFURA_API_KEY = process.env.INFURA_API_KEY || "";
