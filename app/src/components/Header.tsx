@@ -4,13 +4,12 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 interface HeaderProps {
   activeTab: 'matches' | 'admin' | 'dashboard'
   setActiveTab: (tab: 'matches' | 'admin' | 'dashboard') => void
-  isOwner: boolean
   fhevmInitialized: boolean
   fhevmInitializing: boolean
   onInitFHEVM: () => Promise<void>
 }
 
-const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, isOwner, fhevmInitialized, fhevmInitializing, onInitFHEVM }) => {
+const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, fhevmInitialized, fhevmInitializing, onInitFHEVM }) => {
   return (
     <header className="header">
       <div className="container">
@@ -30,14 +29,12 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, isOwner, fhevm
             >
               Matches
             </button>
-            {isOwner && (
-              <button
-                className={`button ${activeTab === 'admin' ? '' : 'button-secondary'}`}
-                onClick={() => setActiveTab('admin')}
-              >
-                Create Match
-              </button>
-            )}
+            <button
+              className={`button ${activeTab === 'admin' ? '' : 'button-secondary'}`}
+              onClick={() => setActiveTab('admin')}
+            >
+              Create Match
+            </button>
           </nav>
 
           <div className="flex items-center gap-4">

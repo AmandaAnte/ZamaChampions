@@ -6,17 +6,12 @@ import Header from './components/Header'
 import Dashboard from './components/Dashboard'
 import MatchList from './components/MatchList'
 import AdminPanel from './components/AdminPanel'
-import { useFootballBettingContract } from './hooks/useContract'
 
 function App() {
   const { address, isConnected } = useAccount()
-  const { useOwner } = useFootballBettingContract()
-  const { data: owner } = useOwner()
   const [fhevmInitialized, setFhevmInitialized] = useState(false)
   const [fhevmInitializing, setFhevmInitializing] = useState(false)
   const [activeTab, setActiveTab] = useState<'matches' | 'admin' | 'dashboard'>('matches')
-
-  const isOwner = address && owner && address.toLowerCase() === owner.toLowerCase()
 
   const handleInitFHEVM = async () => {
     if (fhevmInitialized || fhevmInitializing) return
@@ -53,7 +48,6 @@ function App() {
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        isOwner={!!isOwner}
         fhevmInitialized={fhevmInitialized}
         fhevmInitializing={fhevmInitializing}
         onInitFHEVM={handleInitFHEVM}
@@ -63,7 +57,7 @@ function App() {
         <div className="container">
           {activeTab === 'dashboard' && <Dashboard />}
           {activeTab === 'matches' && <MatchList />}
-          {activeTab === 'admin' && isOwner && <AdminPanel />}
+          {activeTab === 'admin' && <AdminPanel />}
         </div>
       </main>
     </div>

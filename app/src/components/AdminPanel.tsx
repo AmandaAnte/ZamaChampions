@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useFootballBettingContract } from '../hooks/useContract'
 
 const AdminPanel: React.FC = () => {
-  const { createMatch, finishMatch, withdraw, isWritePending } = useFootballBettingContract()
+  const { createMatch, finishMatch, isWritePending } = useFootballBettingContract()
 
   // Helper function to format datetime for input
   const getDefaultDateTime = (minutesFromNow: number) => {
@@ -97,19 +97,6 @@ const AdminPanel: React.FC = () => {
     }
   }
 
-  const handleWithdraw = async () => {
-    try {
-      setError('')
-      setSuccess('')
-
-      const txHash = await withdraw()
-
-      setSuccess(`Withdrawal tx: https://sepolia.etherscan.io/tx/${txHash}`)
-    } catch (err: any) {
-      console.error('Withdrawal failed:', err)
-      setError(err.message || 'Withdrawal failed')
-    }
-  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -269,26 +256,17 @@ const AdminPanel: React.FC = () => {
           </button>
         </form>
 
-        <div className="mt-4">
-          <button
-            className="button button-secondary w-full"
-            onClick={handleWithdraw}
-            disabled={isWritePending}
-          >
-            {isWritePending ? 'Withdrawing...' : 'Withdraw Contract Balance'}
-          </button>
-        </div>
       </div>
 
-      {/* Admin Instructions */}
+      {/* Instructions */}
       <div className="card">
-        <h3>Admin Instructions</h3>
+        <h3>Instructions</h3>
         <ul className="space-y-2 text-gray">
           <li>• When creating matches, betting start time must be in the future</li>
           <li>• Betting end time must be later than start time</li>
           <li>• After match ends, system will automatically decrypt total betting data</li>
           <li>• Users need to manually click settlement to claim rewards</li>
-          <li>• Contract ETH balance can be withdrawn at any time</li>
+          <li>• Match creators can finish matches and set results</li>
         </ul>
       </div>
 
