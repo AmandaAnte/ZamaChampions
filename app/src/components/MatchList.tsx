@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAccount, useWalletClient } from 'wagmi'
 import { useFootballBettingContract } from '../hooks/useContract'
 import { encryptBetData, CONTRACT_ADDRESS } from '../utils/fhe'
-import { BetDirection, BET_UNIT } from '../types/contract'
+import { BetDirection, BET_UNIT } from '../utils/config'
 import { format } from 'date-fns'
 
 const MatchList: React.FC = () => {

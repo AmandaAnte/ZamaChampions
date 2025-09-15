@@ -26,3 +26,13 @@ export const FHEVM_CONFIG = {
   network: 'https://eth-sepolia.public.blastapi.io',
   relayerUrl: 'https://relayer.testnet.zama.cloud',
 }
+
+// Betting constants
+export const BET_UNIT = 100
+
+// Betting directions
+export enum BetDirection {
+  HOME_WIN = 1,
+  AWAY_WIN = 2,
+  DRAW = 3,
+}

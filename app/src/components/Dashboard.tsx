@@ -3,19 +3,19 @@ import { useAccount, useWalletClient } from 'wagmi'
 import { parseEther } from 'viem'
 import { useFootballBettingContract } from '../hooks/useContract'
 import { decryptUserPoints, CONTRACT_ADDRESS } from '../utils/fhe'
-import { ETH_TO_POINTS_RATE } from '../types/contract'
 
+const ETH_TO_POINTS_RATE = 100000
 const Dashboard: React.FC = () => {
   const { address } = useAccount()
   const { data: walletClient } = useWalletClient()
-  const { 
+  const {
     useGetUserPoints,
     buyPoints,
-    isWritePending 
+    isWritePending
   } = useFootballBettingContract()
-  
+
   const { data: encryptedPoints, refetch: refetchPoints } = useGetUserPoints(address as `0x${string}`)
-  
+
   const [ethAmount, setEthAmount] = useState('')
   const [decryptedPoints, setDecryptedPoints] = useState<number | null>(null)
   const [isDecrypting, setIsDecrypting] = useState(false)
@@ -31,13 +31,13 @@ const Dashboard: React.FC = () => {
     try {
       setError('')
       setSuccess('')
-      
+
       const value = parseEther(ethAmount)
       const txHash = await buyPoints(value)
-      
+
       setSuccess(`Purchased ${Number(ethAmount) * ETH_TO_POINTS_RATE} FootPoints — https://sepolia.etherscan.io/tx/${txHash}`)
       setEthAmount('')
-      
+
       // Refresh points after purchase
       setTimeout(() => {
         refetchPoints()
@@ -57,17 +57,17 @@ const Dashboard: React.FC = () => {
     try {
       setIsDecrypting(true)
       setError('')
-      
+
       // 从encryptedPoints中提取handle（这需要根据实际的合约返回格式调整）
       const pointsHandle = encryptedPoints.toString()
-      
+
       const decrypted = await decryptUserPoints(
         pointsHandle,
         CONTRACT_ADDRESS,
         address,
         walletClient
       )
-      
+
       setDecryptedPoints(Number(decrypted))
     } catch (err: any) {
       console.error('Decrypt points failed:', err)
@@ -82,7 +82,7 @@ const Dashboard: React.FC = () => {
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">User Dashboard</h1>
-      
+
       <div className="grid grid-2">
         {/* User Points */}
         <div className="card">
@@ -95,7 +95,7 @@ const Dashboard: React.FC = () => {
             ) : (
               <div className="text-gray mb-4">
                 <p>Points are encrypted, click to decrypt and view</p>
-                <button 
+                <button
                   className="button mt-2"
                   onClick={handleDecryptPoints}
                   disabled={isDecrypting || !encryptedPoints}
@@ -115,7 +115,7 @@ const Dashboard: React.FC = () => {
           <h2>Buy Points</h2>
           {error && <div className="error">{error}</div>}
           {success && <div className="success">{success}</div>}
-          
+
           <div className="form-group">
             <label className="form-label">ETH Amount</label>
             <input
@@ -133,7 +133,7 @@ const Dashboard: React.FC = () => {
               </p>
             )}
           </div>
-          
+
           <button
             className="button w-full"
             onClick={handleBuyPoints}

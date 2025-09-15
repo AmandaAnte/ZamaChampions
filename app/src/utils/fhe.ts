@@ -40,6 +40,12 @@ export async function encryptBetData(contractAddress: string, userAddress: strin
 }
 
 export async function decryptUserPoints(ciphertextHandle: string, contractAddress: string, userAddress: string, walletClient: any) {
+  // Check if handle is all zeros (empty/uninitialized value)
+  const zeroHandle = '0x0000000000000000000000000000000000000000000000000000000000000000'
+  if (ciphertextHandle === zeroHandle || ciphertextHandle === '0x0' || !ciphertextHandle || ciphertextHandle === '0') {
+    return 0
+  }
+
   const instance = getFHEVMInstance()
 
   const keypair = instance.generateKeypair()

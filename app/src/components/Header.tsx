@@ -35,7 +35,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, isOwner, fhevm
                 className={`button ${activeTab === 'admin' ? '' : 'button-secondary'}`}
                 onClick={() => setActiveTab('admin')}
               >
-                Admin Panel
+                Create Match
               </button>
             )}
           </nav>

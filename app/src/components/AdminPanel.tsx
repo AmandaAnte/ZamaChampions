@@ -131,7 +131,7 @@ const AdminPanel: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
+      <h1 className="text-3xl font-bold mb-6">Create Match</h1>
 
       {/* Create Match */}
       <div className="card">
